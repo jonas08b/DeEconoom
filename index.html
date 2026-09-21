@@ -348,6 +348,7 @@ textarea.chat-input:focus{border-color:#555}
     <button class="kal-chip" onclick="setKalFilter('bbp',this)">BBP</button>
     <button class="kal-chip" onclick="setKalFilter('arbeid',this)">Arbeid</button>
     <button class="kal-chip" onclick="setKalFilter('pmi',this)">PMI</button>
+    <button class="kal-chip" onclick="setKalFilter('vertrouwen',this)">Vertrouwen</button>
   </div>
   <div id="kal-content"></div>
 </section>
@@ -776,7 +777,7 @@ function switchTab(id, btn) {
   $('view-'+id).classList.add('active');
   btn.classList.add('active');
   if(id==='meo' && !meoLoaded) loadMEO();
-  if(id==='kalender' && !kalLoaded) renderKalender();
+  if(id==='kalender') renderKalender();
   if(id==='chat') renderSavedChats();
 }
 
@@ -1188,45 +1189,115 @@ function closeSheet(e, force) {
 }
 
 /* ═══════════════════════════════════════════════════
-   KALENDER
+   KALENDER — Alpha Vantage Economic Calendar
+   1 call per dag, gecached in localStorage
 ═══════════════════════════════════════════════════ */
+// API key zit veilig in Vercel env — frontend roept proxy aan
 let kalFilter = 'all';
-const EVENTS = [
-  {date:'2026-09-22',time:'14:30',name:'Fed-toespraak Jerome Powell',region:'🇺🇸 VS',cat:'rente',imp:'high',prev:null,cons:'Hawkish toon verwacht',actual:null},
-  {date:'2026-09-24',time:'11:00',name:'Flash PMI Eurozone (sep)',region:'🇪🇺 EU',cat:'pmi',imp:'high',prev:'49,3',cons:'49,5',actual:null},
-  {date:'2026-09-24',time:'15:45',name:'Flash PMI VS (sep)',region:'🇺🇸 VS',cat:'pmi',imp:'med',prev:'52,1',cons:'52,0',actual:null},
-  {date:'2026-09-26',time:'10:00',name:'IFO Ondernemersklimaat (sep)',region:'🇩🇪 DE',cat:'pmi',imp:'med',prev:'86,4',cons:'86,8',actual:null},
-  {date:'2026-10-02',time:'14:30',name:'NFP Arbeidsmarktrapport VS (sep)',region:'🇺🇸 VS',cat:'arbeid',imp:'high',prev:'+142K',cons:'+150K',actual:null},
-  {date:'2026-10-02',time:'14:30',name:'Werkloosheidsgraad VS (sep)',region:'🇺🇸 VS',cat:'arbeid',imp:'high',prev:'4,2%',cons:'4,2%',actual:null},
-  {date:'2026-10-10',name:'Vergadering IMF/Wereldbank (jaarlijks)',region:'🌐 Internationaal',cat:'rente',imp:'med',prev:null,cons:'World Economic Outlook',actual:null},
-  {date:'2026-10-16',time:'10:00',name:'Inflatie Eurozone final (sep)',region:'🇪🇺 EU',cat:'inflatie',imp:'high',prev:'2,4%',cons:'2,3%',actual:null},
-  {date:'2026-10-16',time:'14:30',name:'CPI VS (sep)',region:'🇺🇸 VS',cat:'inflatie',imp:'high',prev:'2,9%',cons:'2,8%',actual:null},
-  {date:'2026-10-24',time:'09:30',name:'ECB Rentebesluit',region:'🇪🇺 EU',cat:'rente',imp:'high',prev:'3,25%',cons:'3,00% (−25 bps)',actual:null},
-  {date:'2026-10-24',time:'14:30',name:'Flash BBP Eurozone Q3',region:'🇪🇺 EU',cat:'bbp',imp:'high',prev:'+0,3%',cons:'+0,3%',actual:null},
-  {date:'2026-10-30',time:'14:30',name:'BBP VS Q3 (eerste raming)',region:'🇺🇸 VS',cat:'bbp',imp:'high',prev:'+2,8%',cons:'+2,5%',actual:null},
-  {date:'2026-11-05',name:'FOMC Rentebesluit',region:'🇺🇸 VS',cat:'rente',imp:'high',prev:'4,50%',cons:'4,50% of 4,25%',actual:null},
-  {date:'2026-11-13',time:'14:30',name:'CPI VS (okt)',region:'🇺🇸 VS',cat:'inflatie',imp:'high',prev:'2,8%',cons:'2,7%',actual:null},
-  {date:'2026-11-28',time:'10:00',name:'Inflatie Eurozone (okt)',region:'🇪🇺 EU',cat:'inflatie',imp:'high',prev:'2,3%',cons:'2,2%',actual:null},
-];
+let kalEvents  = [];
 
-function setKalFilter(f, btn) {
-  kalFilter=f;
-  document.querySelectorAll('.kal-chip').forEach(c=>c.classList.remove('active'));
-  btn.classList.add('active');
-  renderKalender();
+// Relevante landen (focus: EU + VS impact)
+const KAL_COUNTRIES = new Set(['United States','Euro Zone','Germany','France','Belgium','China','United Kingdom','Japan']);
+
+// Mapping AV category → onze filter + NL label
+function avCategory(ev) {
+  const n = (ev.event||'').toLowerCase();
+  if(/interest rate|central bank|ecb|fed|fomc|monetary/.test(n)) return 'rente';
+  if(/cpi|inflation|pce|hicp|price/.test(n))                      return 'inflatie';
+  if(/gdp|gross domestic/.test(n))                                 return 'bbp';
+  if(/unemployment|nonfarm|payroll|jobs|employment|labor|labour/.test(n)) return 'arbeid';
+  if(/pmi|purchasing manager|manufacturing index|composite/.test(n))      return 'pmi';
+  if(/consumer confidence|sentiment/.test(n))                      return 'vertrouwen';
+  return 'overig';
 }
 
-function renderKalender() {
-  kalLoaded=true;
-  const filtered = kalFilter==='all' ? EVENTS : EVENTS.filter(e=>e.cat===kalFilter);
+function avImpact(ev) {
+  const imp = (ev.impact||'').toLowerCase();
+  if(imp==='high')   return 'high';
+  if(imp==='medium') return 'med';
+  return 'low';
+}
+
+const COUNTRY_FLAG = {
+  'United States':'🇺🇸','Euro Zone':'🇪🇺','Germany':'🇩🇪','France':'🇫🇷',
+  'Belgium':'🇧🇪','China':'🇨🇳','United Kingdom':'🇬🇧','Japan':'🇯🇵',
+};
+const COUNTRY_NL = {
+  'United States':'VS','Euro Zone':'Eurozone','Germany':'Duitsland','France':'Frankrijk',
+  'Belgium':'België','China':'China','United Kingdom':'VK','Japan':'Japan',
+};
+
+async function fetchKalender() {
+  // Cache: max 1 call per dag
+  try {
+    const cached = JSON.parse(localStorage.getItem('kal_cache')||'null');
+    const today  = new Date().toISOString().slice(0,10);
+    if(cached && cached.date === today && cached.events?.length) return cached.events;
+  } catch {}
+
+  const url = `/api/kalender`;
+  const r   = await fetch(url, {signal: AbortSignal.timeout(10000)});
+  const d   = await r.json();
+
+  // AV geeft { "name":"...", "description":"...", next array }  of direct een array
+  const raw = Array.isArray(d) ? d : (d.events || d.data || []);
+
+  const events = raw
+    .filter(ev => KAL_COUNTRIES.has(ev.country))
+    .map(ev => ({
+      date:    (ev.date||'').slice(0,10),
+      time:    (ev.date||'').slice(11,16) || null,
+      name:    ev.event || ev.name || '–',
+      country: ev.country,
+      flag:    COUNTRY_FLAG[ev.country] || '🌐',
+      region:  `${COUNTRY_FLAG[ev.country]||'🌐'} ${COUNTRY_NL[ev.country]||ev.country}`,
+      cat:     avCategory(ev),
+      imp:     avImpact(ev),
+      prev:    ev.previous != null ? String(ev.previous) : null,
+      cons:    ev.estimate  != null ? String(ev.estimate)  : null,
+      actual:  ev.actual    != null ? String(ev.actual)    : null,
+    }))
+    .filter(ev => ev.date)
+    .sort((a,b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''));
+
+  try {
+    localStorage.setItem('kal_cache', JSON.stringify({ date: new Date().toISOString().slice(0,10), events }));
+  } catch {}
+  return events;
+}
+
+function setKalFilter(f, btn) {
+  kalFilter = f;
+  document.querySelectorAll('.kal-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderKalenderHTML();
+}
+
+function renderKalenderHTML() {
+  const filtered = kalFilter==='all'
+    ? kalEvents
+    : kalFilter==='vertrouwen'
+      ? kalEvents.filter(e=>e.cat==='vertrouwen'||e.cat==='overig')
+      : kalEvents.filter(e=>e.cat===kalFilter);
+
   const groups = {};
-  for(const e of filtered) { if(!groups[e.date]) groups[e.date]=[]; groups[e.date].push(e); }
-  let html='';
-  for(const day of Object.keys(groups).sort()) {
+  for(const e of filtered) {
+    if(!groups[e.date]) groups[e.date]=[];
+    groups[e.date].push(e);
+  }
+
+  // Toon enkel komende 6 weken (niet te ver in de toekomst)
+  const today   = new Date().toISOString().slice(0,10);
+  const maxDate = new Date(Date.now()+42*86400000).toISOString().slice(0,10);
+  const days    = Object.keys(groups).filter(d=>d>=today&&d<=maxDate).sort();
+
+  let html = '';
+  for(const day of days) {
     const label = new Date(day+'T12:00:00').toLocaleDateString('nl-BE',{weekday:'long',day:'numeric',month:'long'});
     html += `<div class="kal-group"><div class="kal-day-hd">${label}</div>`;
     for(const ev of groups[day]) {
       const impCls = ev.imp==='high'?'imp-high':ev.imp==='med'?'imp-med':'imp-low';
+      const catLabel = {rente:'RENTE',inflatie:'INFLATIE',bbp:'BBP',arbeid:'ARBEID',pmi:'PMI',vertrouwen:'VERTROUWEN',overig:''}[ev.cat]||ev.cat.toUpperCase();
       html += `<div class="kal-event">
         <div class="kal-time">${ev.time||'–'}</div>
         <div class="kal-imp ${impCls}"></div>
@@ -1234,18 +1305,30 @@ function renderKalender() {
           <div class="kal-name">${ev.name}</div>
           <div class="kal-region">${ev.region}</div>
           <div class="kal-vals">
-            ${ev.prev?`<span>Vorig: <strong>${ev.prev}</strong></span>`:''}
-            ${ev.cons?`<span>Consensus: <strong>${ev.cons}</strong></span>`:''}
-            ${ev.actual?`<span>Actueel: <strong style="color:var(--green)">${ev.actual}</strong></span>`:''}
+            ${ev.prev   ? `<span>Vorig: <strong>${ev.prev}</strong></span>`   : ''}
+            ${ev.cons   ? `<span>Consensus: <strong>${ev.cons}</strong></span>` : ''}
+            ${ev.actual ? `<span>Actueel: <strong style="color:var(--green)">${ev.actual}</strong></span>` : ''}
           </div>
         </div>
-        <div class="kal-tag">${ev.cat.toUpperCase()}</div>
+        ${catLabel ? `<div class="kal-tag">${catLabel}</div>` : ''}
       </div>`;
     }
     html += '</div>';
   }
-  if(!html) html = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-txt">Geen evenementen in deze categorie.</div></div>';
+  if(!html) html = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-txt">Geen evenementen gevonden.</div></div>';
   $('kal-content').innerHTML = html;
+}
+
+async function renderKalender() {
+  kalLoaded = true;
+  $('kal-content').innerHTML = '<div class="load-screen"><div class="spin-lg"></div>Kalender ophalen…</div>';
+  try {
+    kalEvents = await fetchKalender();
+    // Voeg filterset toe als "vertrouwen" niet leeg is
+    renderKalenderHTML();
+  } catch(e) {
+    $('kal-content').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-txt">Kalender tijdelijk niet beschikbaar.<br><small>${e.message}</small></div></div>`;
+  }
 }
 
 /* ═══════════════════════════════════════════════════
