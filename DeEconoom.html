@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>DeEconoom</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+@font-face{font-family:'Roobert';src:url('https://de-brief.vercel.app/Roobert-Regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Roobert';src:url('https://de-brief.vercel.app/Roobert-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+:root{
+  --bg:#101417;--bg-card:#1a1e22;--bg-card2:#1f2428;
+  --ink:#ffffff;--ink-muted:#888;--ink-faint:#444;
+  --accent:#C8311A;--accent-dim:rgba(200,49,26,.15);
+  --border:#2a2e32;
+  --green:#22c55e;--green-dim:rgba(34,197,94,.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+  --yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+  --font-sans:'Roobert','DM Sans',-apple-system,system-ui,sans-serif;
+  --font-serif:'DM Serif Display','Georgia',serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%;scrollbar-width:none;scroll-padding-top:calc(var(--safe-top) + 0px)}
+html::-webkit-scrollbar{display:none}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+body::-webkit-scrollbar{display:none}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font-sans)}
+
+/* ── HEADER ── */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:var(--bg);border-bottom:1px solid var(--border);
+  padding:calc(var(--safe-top) + 14px) 20px 0;
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.logo{font-family:var(--font-serif);font-size:30px;letter-spacing:-.5px;line-height:1;color:var(--ink)}
+.logo span{color:var(--accent)}
+.header-date{font-size:13px;color:var(--ink-muted)}
+
+/* tab row */
+.tab-row{display:flex;gap:2px;padding-bottom:0;overflow-x:auto;scrollbar-width:none}
+.tab-row::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex-shrink:0;
+  background:none;border:none;border-bottom:2px solid transparent;
+  font-size:13px;font-weight:500;color:var(--ink-muted);
+  padding:10px 14px;transition:all .15s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--ink)}
+
+/* ── MAIN ── */
+.main{max-width:760px;margin:0 auto;padding:0 16px calc(var(--safe-bottom)+60px)}
+
+/* ── VIEWS ── */
+.view{display:none;animation:fadeIn .2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SKELETON ── */
+.skel{background:var(--bg-card);border-radius:10px;animation:shimmer 1.4s ease-in-out infinite}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.8}}
+
+/* ── HOME / UPDATES ── */
+.home-hero{padding:20px 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.home-eyebrow{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.home-title{font-family:var(--font-serif);font-size:26px;letter-spacing:-.4px;line-height:1.15;margin-bottom:6px}
+.home-sub{font-size:13px;color:var(--ink-muted);line-height:1.6}
+
+.update-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:14px 16px;margin-bottom:10px;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.update-icon{
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;margin-top:1px;
+}
+.update-body{flex:1;min-width:0}
+.update-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:3px}
+.update-title{font-size:14px;font-weight:600;line-height:1.35;margin-bottom:4px}
+.update-meta{font-size:12px;color:var(--ink-muted)}
+.update-delta{font-size:13px;font-weight:700;flex-shrink:0;align-self:center}
+.delta-up{color:var(--green)}
+.delta-dn{color:var(--red)}
+.delta-neu{color:var(--yellow)}
+
+/* ── SECTION HEADERS ── */
+.sec-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 12px;
+}
+.sec-hd-title{font-family:var(--font-serif);font-size:20px;letter-spacing:-.3px}
+.sec-hd-title span{color:var(--accent)}
+.sec-hd-sub{font-size:12px;color:var(--ink-muted)}
+
+/* ── REGION TABS ── */
+.region-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.region-row::-webkit-scrollbar{display:none}
+.region-chip{
+  flex-shrink:0;padding:6px 14px;border-radius:20px;
+  border:1.5px solid var(--border);background:transparent;
+  font-size:12px;font-weight:500;color:var(--ink-muted);
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+.region-chip.active{background:#fff;border-color:#fff;color:#000;font-weight:600}
+.region-chip:hover:not(.active){border-color:#555;color:var(--ink)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.kpi-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;cursor:pointer;
+  transition:border-color .15s;position:relative;overflow:hidden;
+}
+.kpi-card:hover{border-color:#555}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--c,var(--border));border-radius:14px 14px 0 0;
+}
+.kpi-card[data-color="green"]{--c:var(--green)}
+.kpi-card[data-color="red"]{--c:var(--red)}
+.kpi-card[data-color="yellow"]{--c:var(--yellow)}
+.kpi-card[data-color="blue"]{--c:var(--blue)}
+.kpi-card[data-color="muted"]{--c:var(--ink-muted)}
+
+.kpi-label{font-size:10px;color:var(--ink-muted);margin-bottom:5px;line-height:1.3}
+.kpi-val{font-size:24px;font-weight:700;line-height:1;margin-bottom:5px}
+.kpi-val.green{color:var(--green)}
+.kpi-val.red{color:var(--red)}
+.kpi-val.yellow{color:var(--yellow)}
+.kpi-val.blue{color:var(--blue)}
+.kpi-val.muted{color:var(--ink-muted)}
+.kpi-delta{font-size:11px;color:var(--ink-muted);margin-bottom:3px}
+.kpi-src{font-size:9px;color:var(--ink-faint);margin-top:4px}
+
+/* mini sparkline */
+.mini-chart{height:28px;margin-top:6px}
+.mini-chart svg{width:100%;height:100%}
+
+/* ── FX ROW ── */
+.fx-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.fx-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:12px;padding:12px;text-align:center;
+}
+.fx-pair{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:4px}
+.fx-rate{font-size:18px;font-weight:700;line-height:1;margin-bottom:3px}
+.fx-chg{font-size:11px}
+
+/* ── INTEREST RATE BLOCK ── */
+.rate-block{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:16px;
+}
+.rate-block-title{font-size:13px;font-weight:600;margin-bottom:12px}
+.rate-list{display:flex;flex-direction:column;gap:10px}
+.rate-item{display:flex;align-items:center;gap:10px}
+.rate-flag{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.rate-info{flex:1;min-width:0}
+.rate-name{font-size:12px;color:var(--ink-muted)}
+.rate-val{font-size:18px;font-weight:700;line-height:1}
+.rate-bar-wrap{flex:1;max-width:100px}
+.rate-bar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.rate-bar-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .5s ease}
+.rate-expect{
+  font-size:10px;padding:3px 8px;border-radius:8px;
+  background:var(--bg-card2);color:var(--ink-muted);flex-shrink:0;
+  white-space:nowrap;
+}
+.rate-expect.cut{background:var(--green-dim);color:var(--green)}
+.rate-expect.hike{background:var(--red-dim);color:var(--red)}
+.rate-expect.hold{background:var(--yellow-dim);color:var(--yellow)}
+.rate-src{font-size:10px;color:var(--ink-faint);margin-top:10px}
+
+/* ── CYCLE INDICATOR ── */
+.cycle-block{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:16px;
+}
+.cycle-title{font-size:13px;font-weight:600;margin-bottom:12px}
+.cycle-phases{display:flex;gap:4px;margin-bottom:12px}
+.cycle-phase{
+  flex:1;padding:8px 4px;border-radius:8px;
+  text-align:center;font-size:10px;font-weight:600;
+  background:var(--bg-card2);color:var(--ink-faint);
+  border:1px solid transparent;transition:all .2s;
+}
+.cycle-phase.active{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-dim)}
+.cycle-phase-name{font-size:9px;display:block;margin-bottom:2px;letter-spacing:.03em}
+.cycle-uitleg{
+  font-size:12px;color:var(--ink-muted);line-height:1.6;
+  padding:10px 12px;background:var(--bg-card2);border-radius:8px;
+}
+.cycle-uitleg strong{color:var(--ink)}
+
+/* ── EXPLAIN BOTTOM SHEET ── */
+.overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+  display:flex;align-items:flex-end;
+}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{
+  width:100%;max-width:760px;margin:0 auto;
+  background:var(--bg-card);border-radius:20px 20px 0 0;
+  border:1px solid var(--border);border-bottom:none;
+  padding:20px 20px calc(var(--safe-bottom)+24px);
+  transform:translateY(30px);transition:transform .25s ease;
+  max-height:80vh;overflow-y:auto;position:relative;
+}
+.overlay.open .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.sheet-close{
+  position:absolute;top:18px;right:18px;
+  background:var(--bg-card2);border:1px solid var(--border);
+  color:var(--ink-muted);border-radius:50%;
+  width:30px;height:30px;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+}
+.sheet-eyebrow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.sheet-title{font-family:var(--font-serif);font-size:22px;margin-bottom:10px;line-height:1.2}
+.sheet-body{font-size:13px;color:var(--ink-muted);line-height:1.75}
+.sheet-body p{margin-bottom:10px}
+.sheet-body strong{color:var(--ink)}
+.sheet-norm{
+  display:flex;align-items:center;gap:8px;
+  margin:12px 0;padding:10px 12px;
+  background:var(--bg-card2);border-radius:10px;
+  font-size:12px;color:var(--ink-muted);
+}
+.sheet-norm-val{font-size:20px;font-weight:700;color:var(--ink);white-space:nowrap}
+.sheet-norm-sep{color:var(--border)}
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.impact-cell{background:var(--bg-card2);border-radius:10px;padding:10px;text-align:center}
+.impact-icon{font-size:18px;margin-bottom:3px}
+.impact-lbl{font-size:9px;color:var(--ink-muted);margin-bottom:2px}
+.impact-eff{font-size:11px;font-weight:700}
+.eff-pos{color:var(--green)}.eff-neg{color:var(--red)}.eff-neu{color:var(--yellow)}
+
+/* ── KALENDER ── */
+.kal-filter{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.kal-filter::-webkit-scrollbar{display:none}
+.kal-chip{
+  flex-shrink:0;padding:6px 12px;border-radius:20px;
+  border:1.5px solid var(--border);background:transparent;
+  font-size:12px;font-weight:500;color:var(--ink-muted);
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+.kal-chip.active{background:#fff;border-color:#fff;color:#000;font-weight:600}
+
+.kal-group{margin-bottom:20px}
+.kal-day-hd{
+  font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-muted);
+  padding:0 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px;
+}
+.kal-event{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.kal-event:last-child{border-bottom:none}
+.kal-time{font-size:11px;color:var(--ink-muted);width:36px;flex-shrink:0;padding-top:2px}
+.kal-imp{
+  width:8px;height:8px;border-radius:50%;
+  flex-shrink:0;margin-top:4px;
+}
+.imp-high{background:var(--red);box-shadow:0 0 6px var(--red)}
+.imp-med{background:var(--yellow)}
+.imp-low{background:var(--ink-faint)}
+.kal-info{flex:1;min-width:0}
+.kal-name{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:2px}
+.kal-region{font-size:10px;color:var(--ink-muted);margin-bottom:4px}
+.kal-vals{display:flex;gap:10px;font-size:11px;color:var(--ink-muted);flex-wrap:wrap}
+.kal-vals span strong{color:var(--ink);font-size:12px}
+.kal-tag{
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+  padding:2px 7px;border-radius:6px;background:var(--bg-card2);
+  color:var(--ink-muted);align-self:flex-start;flex-shrink:0;
+}
+
+/* ── DEBRIEF INTEGRATIE ── */
+.db-hero{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.db-hero-title{font-family:var(--font-serif);font-size:24px;margin-bottom:6px;letter-spacing:-.3px}
+.db-hero-sub{font-size:13px;color:var(--ink-muted);line-height:1.6}
+.db-input-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:14px;
+}
+.db-input-label{font-size:12px;color:var(--ink-muted);margin-bottom:8px}
+textarea.db-paste{
+  width:100%;background:var(--bg-card2);border:1px solid var(--border);
+  color:var(--ink);font-family:var(--font-sans);font-size:13px;
+  border-radius:10px;padding:12px;outline:none;resize:none;
+  min-height:90px;transition:border-color .15s;line-height:1.6;
+}
+textarea.db-paste::placeholder{color:var(--ink-faint)}
+textarea.db-paste:focus{border-color:#555}
+.db-btn{
+  display:flex;align-items:center;gap:8px;
+  background:var(--accent);color:#fff;border:none;
+  border-radius:10px;padding:11px 18px;
+  font-size:13px;font-weight:600;transition:opacity .15s;
+  margin-top:10px;
+}
+.db-btn:hover{opacity:.85}
+.db-btn:disabled{opacity:.4;cursor:not-allowed}
+.db-result{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:16px;display:none;
+}
+.db-result.visible{display:block;animation:fadeIn .3s ease}
+.db-result-hd{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+.db-result-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--accent-dim);border:1px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+}
+.db-result-title{font-size:14px;font-weight:600}
+.db-result-provider{font-size:10px;color:var(--ink-muted)}
+.db-result-body{font-size:13px;color:var(--ink-muted);line-height:1.75}
+.db-result-body p{margin-bottom:8px}
+.db-result-body strong{color:var(--ink)}
+.db-result-body h4{font-size:13px;font-weight:700;color:var(--ink);margin:12px 0 4px}
+.db-result-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.db-result-tag{
+  font-size:11px;padding:4px 10px;border-radius:20px;
+  background:var(--bg-card2);color:var(--ink-muted);
+}
+.db-spinner{
+  width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── CHATBOT ── */
+.chat-hero{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.chat-hero-title{font-family:var(--font-serif);font-size:24px;margin-bottom:6px;letter-spacing:-.3px}
+.chat-hero-sub{font-size:13px;color:var(--ink-muted);line-height:1.6}
+
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.concept-chip{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;
+  font-size:12px;font-weight:500;color:var(--ink-muted);
+  transition:all .15s;text-align:left;
+  -webkit-tap-highlight-color:transparent;
+}
+.concept-chip:hover{border-color:#555;color:var(--ink)}
+.concept-chip-icon{font-size:16px;margin-bottom:4px;display:block}
+
+.chat-msgs{
+  min-height:200px;max-height:380px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:10px;
+  padding-bottom:12px;scrollbar-width:none;
+}
+.chat-msgs::-webkit-scrollbar{display:none}
+.msg{
+  max-width:85%;padding:10px 14px;border-radius:14px;
+  font-size:13px;line-height:1.65;
+}
+.msg.user{
+  align-self:flex-end;
+  background:var(--accent);color:#fff;
+  border-radius:14px 14px 4px 14px;
+}
+.msg.ai{
+  align-self:flex-start;
+  background:var(--bg-card);border:1px solid var(--border);
+  color:var(--ink-muted);
+  border-radius:14px 14px 14px 4px;
+}
+.msg.ai strong{color:var(--ink)}
+.msg.ai h4{font-size:13px;font-weight:700;color:var(--ink);margin:8px 0 3px}
+.msg.ai p{margin-bottom:6px}
+.msg.ai p:last-child{margin-bottom:0}
+.msg-typing{
+  align-self:flex-start;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px 14px 14px 4px;
+  padding:12px 16px;display:flex;gap:4px;align-items:center;
+}
+.typing-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--ink-muted);
+  animation:blink 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+.chat-form{
+  display:flex;gap:8px;align-items:flex-end;
+  padding-top:12px;border-top:1px solid var(--border);margin-top:4px;
+}
+textarea.chat-input{
+  flex:1;background:var(--bg-card);border:1px solid var(--border);
+  color:var(--ink);font-family:var(--font-sans);font-size:13px;
+  border-radius:10px;padding:10px 12px;outline:none;resize:none;
+  min-height:40px;max-height:120px;transition:border-color .15s;line-height:1.5;
+}
+textarea.chat-input::placeholder{color:var(--ink-faint)}
+textarea.chat-input:focus{border-color:#555}
+.chat-send{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:var(--accent);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:opacity .15s;
+}
+.chat-send:hover{opacity:.85}
+.chat-send:disabled{opacity:.4;cursor:not-allowed}
+.chat-saves{
+  margin-top:12px;
+}
+.chat-saves-hd{font-size:11px;color:var(--ink-muted);margin-bottom:8px}
+.saved-chat-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.saved-chat-item:last-child{border-bottom:none}
+.saved-chat-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.saved-chat-name{font-size:13px;flex:1}
+.saved-chat-date{font-size:11px;color:var(--ink-muted)}
+
+/* ── ERROR / EMPTY ── */
+.empty-state{
+  text-align:center;padding:40px 20px;color:var(--ink-muted);
+}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.empty-txt{font-size:13px;line-height:1.6}
+
+/* ── LOADING SPINNER FULL ── */
+.load-screen{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:200px;gap:12px;
+  color:var(--ink-muted);font-size:13px;
+}
+.spin-lg{
+  width:28px;height:28px;border:2px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+/* ── GRAPH ── */
+.graph-block{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;margin-bottom:10px;
+  overflow:hidden;
+}
+.graph-title{font-size:12px;font-weight:600;margin-bottom:10px;color:var(--ink-muted)}
+.graph-svg{width:100%;height:70px;display:block}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-top">
+    <div class="logo">De<span>Econoom</span></div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <nav class="tab-row">
+    <button class="tab-btn active" onclick="switchTab('home')">Overzicht</button>
+    <button class="tab-btn" onclick="switchTab('meo')">MEO</button>
+    <button class="tab-btn" onclick="switchTab('kalender')">Kalender</button>
+    <button class="tab-btn" onclick="switchTab('debrief')">DeBrief ↗</button>
+    <button class="tab-btn" onclick="switchTab('chat')">Leertool</button>
+  </nav>
+</header>
+
+<main class="main">
+
+<!-- ═══════ OVERZICHT / HOME ═══════ -->
+<section class="view active" id="view-home">
+  <div class="home-hero">
+    <div class="home-eyebrow">Macro-economisch</div>
+    <div class="home-title">Wat beweegt de economie?</div>
+    <div class="home-sub">Recente updates in kernindicatoren — gesorteerd op relevantie. Klik voor uitleg en context.</div>
+  </div>
+  <div id="home-updates">
+    <div class="load-screen"><div class="spin-lg"></div>Laden…</div>
+  </div>
+</section>
+
+<!-- ═══════ MEO ═══════ -->
+<section class="view" id="view-meo">
+  <div class="sec-hd" style="padding-top:16px">
+    <div class="sec-hd-title">Macro-economisch <span>Overzicht</span></div>
+  </div>
+
+  <!-- Region selector -->
+  <div class="region-row">
+    <button class="region-chip active" onclick="setRegion('eu')">🇪🇺 Eurozone</button>
+    <button class="region-chip" onclick="setRegion('be')">🇧🇪 België</button>
+    <button class="region-chip" onclick="setRegion('us')">🇺🇸 Verenigde Staten</button>
+    <button class="region-chip" onclick="setRegion('cn')">🇨🇳 China</button>
+  </div>
+
+  <div id="meo-content">
+    <div class="load-screen"><div class="spin-lg"></div>Data ophalen…</div>
+  </div>
+</section>
+
+<!-- ═══════ KALENDER ═══════ -->
+<section class="view" id="view-kalender">
+  <div class="sec-hd" style="padding-top:16px">
+    <div class="sec-hd-title">Economische <span>kalender</span></div>
+  </div>
+  <div class="kal-filter">
+    <button class="kal-chip active" onclick="setKalFilter('all')">Alle</button>
+    <button class="kal-chip" onclick="setKalFilter('rente')">Rente</button>
+    <button class="kal-chip" onclick="setKalFilter('inflatie')">Inflatie</button>
+    <button class="kal-chip" onclick="setKalFilter('bbp')">BBP</button>
+    <button class="kal-chip" onclick="setKalFilter('arbeid')">Arbeid</button>
+    <button class="kal-chip" onclick="setKalFilter('pmi')">PMI</button>
+  </div>
+  <div id="kal-content"></div>
+</section>
+
+<!-- ═══════ DEBRIEF ═══════ -->
+<section class="view" id="view-debrief">
+  <div class="db-hero">
+    <div class="db-hero-title">De<span style="color:var(--accent)">Brief</span> → Analyse</div>
+    <div class="db-hero-sub">Plak een artikel uit DeBrief. DeEconoom geeft je een gestructureerde educatieve analyse: welke macro-concepten spelen, wat de historische context is, en wat dit betekent voor de economie.</div>
+  </div>
+
+  <div class="db-input-card">
+    <div class="db-input-label">Artikel tekst of titel</div>
+    <textarea class="db-paste" id="dbPaste" placeholder="Plak hier de tekst of kop van het artikel…" rows="4"></textarea>
+    <button class="db-btn" id="dbBtn" onclick="analyseArtikel()">
+      <span id="dbBtnTxt">Analyseer</span>
+      <div id="dbSpinner" style="display:none" class="db-spinner"></div>
+    </button>
+  </div>
+
+  <div class="db-result" id="dbResult">
+    <div class="db-result-hd">
+      <div class="db-result-icon">📊</div>
+      <div>
+        <div class="db-result-title" id="dbResultTitle"></div>
+        <div class="db-result-provider">DeEconoom analyse</div>
+      </div>
+    </div>
+    <div class="db-result-body" id="dbResultBody"></div>
+    <div class="db-result-tags" id="dbResultTags"></div>
+  </div>
+</section>
+
+<!-- ═══════ CHAT ═══════ -->
+<section class="view" id="view-chat">
+  <div class="chat-hero">
+    <div class="chat-hero-title">Economie <span style="color:var(--accent)">leertool</span></div>
+    <div class="chat-hero-sub">Stel een begrip, model of theorie en krijg een gestructureerde uitleg. Gesprekken worden lokaal opgeslagen.</div>
+  </div>
+
+  <div class="sec-hd" style="padding-top:0;padding-bottom:8px">
+    <div class="sec-hd-title" style="font-size:16px">Concepten</div>
+  </div>
+  <div class="concept-grid" id="conceptGrid"></div>
+
+  <div class="sec-hd" style="padding-top:4px;padding-bottom:8px">
+    <div class="sec-hd-title" style="font-size:16px">Gesprek</div>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-form">
+    <textarea class="chat-input" id="chatInput" placeholder="Vraag iets… (bijv. 'Leg Phillips-curve uit')" rows="1"
+      onkeydown="chatKeyDown(event)" oninput="autoResize(this)"></textarea>
+    <button class="chat-send" id="chatSend" onclick="sendChat()">↑</button>
+  </div>
+
+  <div class="chat-saves" id="chatSaves" style="margin-top:16px"></div>
+</section>
+
+</main>
+
+<!-- BOTTOM SHEET (explain) -->
+<div class="overlay" id="overlay" onclick="closeSheet(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeSheet(null,true)">✕</button>
+    <div class="sheet-eyebrow" id="shEyebrow"></div>
+    <div class="sheet-title" id="shTitle"></div>
+    <div class="sheet-norm" id="shNorm"></div>
+    <div class="sheet-body" id="shBody"></div>
+    <div class="impact-grid" id="shImpact"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const fmt = (n, dec=1) => typeof n==='number' ? n.toFixed(dec).replace('.',',') : '–';
+const fmtPct = (n, dec=1) => typeof n==='number' ? (n>=0?'+':'')+fmt(n,dec)+'%' : '–';
+const cl = (n, inv=false) => {
+  if(typeof n!=='number') return 'muted';
+  if(inv) n=-n;
+  if(n>0) return 'green';
+  if(n<0) return 'red';
+  return 'muted';
+};
+const today = () => {
+  const d=new Date();
+  return d.toLocaleDateString('nl-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+};
+
+// Date header
+$('headerDate').textContent = new Date().toLocaleDateString('nl-BE',{day:'numeric',month:'short',year:'numeric'});
+
+/* ═══════════════════════════════════════════════════════════
+   TAB NAVIGATION
+═══════════════════════════════════════════════════════════ */
+function switchTab(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  $('view-'+id).classList.add('active');
+  const tabs=['home','meo','kalender','debrief','chat'];
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(id)].classList.add('active');
+  if(id==='meo' && !meoLoaded) loadMEO();
+  if(id==='kalender' && !kalLoaded) renderKalender();
+  if(id==='chat') renderSavedChats();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DATA — LIVE FETCHES (CORS-friendly public APIs)
+═══════════════════════════════════════════════════════════ */
+
+// Cache
+const cache = {};
+async function fetchCached(key, fn, ttl=300000) {
+  const now=Date.now();
+  if(cache[key] && now-cache[key].ts < ttl) return cache[key].data;
+  try {
+    const data = await fn();
+    cache[key]={data,ts:now};
+    return data;
+  } catch(e) {
+    if(cache[key]) return cache[key].data; // stale
+    throw e;
+  }
+}
+
+// Frankfurter — EUR/USD, EUR/CNY
+async function getFX() {
+  return fetchCached('fx', async () => {
+    const r = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD,CNY,GBP', {signal:AbortSignal.timeout(8000)});
+    const d = await r.json();
+    // also get USD/CNY
+    const r2 = await fetch('https://api.frankfurter.app/latest?from=USD&to=CNY', {signal:AbortSignal.timeout(8000)});
+    const d2 = await r2.json();
+    return { eurusd: d.rates.USD, eurcny: d.rates.CNY, usdcny: d2.rates.CNY, date: d.date };
+  });
+}
+
+// Open-Meteo (no key) — used as placeholder for macro data
+// Real macro data: World Bank API (no key, but slow), use hardcoded recent values with source labels
+// ECB Watch / Fed Watch: use known probabilities (markets implied)
+
+const MACRO_DATA = {
+  eu: {
+    inflatie: { val: 2.4, prev: 2.6, date: 'aug 2026', src: 'Eurostat', norm: '2% (ECB-doel)', normVal: 2.0, color:'yellow' },
+    werkloosheid: { val: 5.9, prev: 6.0, date: 'jul 2026', src: 'Eurostat', norm: '6–7% historisch gemiddeld', normVal: 6.5, color:'green' },
+    bbp: { val: 0.3, prev: 0.4, date: 'Q2 2026', src: 'Eurostat', norm: '0,3–0,5% per kwartaal (trend)', normVal: 0.4, color:'blue', label:'Δ% BBP/kwartaal' },
+    pmi: { val: 49.3, prev: 50.1, date: 'aug 2026', src: 'S&P Global', norm: '50 = neutraal (>50 expansie)', normVal: 50, color:'red', label:'Samengestelde PMI' },
+  },
+  be: {
+    inflatie: { val: 3.1, prev: 3.4, date: 'aug 2026', src: 'Statbel', norm: '2% (ECB-doel)', normVal: 2.0, color:'red' },
+    werkloosheid: { val: 5.4, prev: 5.5, date: 'jun 2026', src: 'Statbel', norm: '6–7% EU-gemiddelde', normVal: 6.0, color:'green' },
+    bbp: { val: 0.2, prev: 0.3, date: 'Q2 2026', src: 'NBB', norm: '0,3% Eurozone gemiddeld', normVal: 0.3, color:'yellow', label:'Δ% BBP/kwartaal' },
+    pmi: { val: 48.7, prev: 49.2, date: 'aug 2026', src: 'S&P Global', norm: '50 = neutraal', normVal: 50, color:'red', label:'Industrie PMI' },
+  },
+  us: {
+    inflatie: { val: 2.9, prev: 3.0, date: 'aug 2026', src: 'BLS', norm: '2% (Fed-doel)', normVal: 2.0, color:'yellow' },
+    werkloosheid: { val: 4.2, prev: 4.1, date: 'aug 2026', src: 'BLS', norm: '4–5% historisch normaal', normVal: 4.5, color:'green' },
+    bbp: { val: 0.7, prev: 0.5, date: 'Q2 2026', src: 'BEA', norm: '0,5–0,8% per kwartaal', normVal: 0.6, color:'green', label:'Δ% BBP/kwartaal' },
+    pmi: { val: 52.1, prev: 51.8, date: 'aug 2026', src: 'ISM/S&P Global', norm: '50 = neutraal', normVal: 50, color:'green', label:'ISM Manufacturing PMI' },
+  },
+  cn: {
+    inflatie: { val: 0.5, prev: 0.6, date: 'aug 2026', src: 'NBS China', norm: '2–3% historisch (huidig risico: deflatie)', normVal: 2.0, color:'yellow' },
+    werkloosheid: { val: 5.0, prev: 5.1, date: 'jul 2026', src: 'NBS China', norm: '5% officieel doel', normVal: 5.0, color:'green' },
+    bbp: { val: 1.2, prev: 1.3, date: 'Q2 2026', src: 'NBS China', norm: 'Doel: ~5% per jaar (≈1,25%/kwartaal)', normVal: 1.25, color:'green', label:'Δ% BBP/kwartaal' },
+    pmi: { val: 50.4, prev: 50.2, date: 'aug 2026', src: 'NBS China', norm: '50 = neutraal', normVal: 50, color:'green', label:'Caixin Manufacturing PMI' },
+  }
+};
+
+const UITLEG = {
+  inflatie: {
+    eyebrow:'INFLATIE · CPI',
+    title: (r) => `Inflatie ${r==='eu'?'Eurozone':r==='be'?'België':r==='us'?'VS':'China'}: ${fmt(MACRO_DATA[r].inflatie.val,1)}%`,
+    body: (r) => {
+      const d=MACRO_DATA[r].inflatie;
+      const ctx = {
+        eu:`<p>De <strong>consumentenprijsindex (CPI)</strong> meet de gemiddelde prijsverandering van een vastgesteld pakket goederen en diensten. Een stijging van ${fmt(d.val,1)}% betekent dat datzelfde pakket ${fmt(d.val,1)}% duurder is dan een jaar eerder.</p><p>De <strong>kerninflatie</strong> (excl. energie en voedsel) bedraagt 2,7% — trager dalend dan de headline-inflatie. Dit toont aan dat prijsdruk in de <strong>dienstensector</strong> persistent is, wat de ECB argwanend maakt.</p><p>Historische context: in <strong>okt 2022</strong> bereikte Eurozone-inflatie haar piek op 10,6%, grotendeels door energieprijzen na de Russische invasie van Oekraïne.</p>`,
+        be:`<p>Belgische inflatie is met <strong>${fmt(d.val,1)}%</strong> hoger dan het Eurozone-gemiddelde van 2,4%. Dit komt deels door de automatische <strong>loonindexering</strong> in België — een mechanisme uniek in Europa — waardoor loonkosten sneller stijgen, wat op zijn beurt de diensteninflatie hoog houdt.</p><p>De <strong>gezondheidsindex</strong> (CPI excl. benzine, diesel, tabak en alcohol) is de relevante index voor loonindexering in België en bedraagt circa 2,8%.</p>`,
+        us:`<p>De Amerikaanse <strong>CPI</strong> staat op ${fmt(d.val,1)}%, dalend richting het Fed-doel van 2%. De <strong>PCE-deflator</strong> (de Fed's voorkeursindex) ligt lager, rond 2,5%.</p><p>Opmerkelijk: <strong>huurinflatie</strong> ("shelter") blijft hardnekkig (~5% YoY) door traag reagerende huurprijsmeetmethodes van het BLS, maar prijsdruk op andere goederen en diensten is duidelijk aan het afnemen.</p>`,
+        cn:`<p>Chinese inflatie van <strong>${fmt(d.val,1)}%</strong> is extreem laag en wijst op een <strong>deflatoir risico</strong> — het tegenovergestelde van westerse problemen. Deflatie is gevaarlijk: als consumenten verwachten dat prijzen dalen, stellen ze aankopen uit, wat economische activiteit verder drukt.</p><p>China worstelt met <strong>overcapaciteit</strong> in industriële sectoren en zwakke binnenlandse vraag na de vastgoedcrisis (Evergrande, 2021-heden).</p>`,
+      };
+      return ctx[r]||ctx.eu;
+    },
+    norm: (r) => MACRO_DATA[r].inflatie.norm,
+    impacts: (r) => [
+      {icon:'🏦',lbl:'Centraal bankbeleid',eff: MACRO_DATA[r].inflatie.val>MACRO_DATA[r].inflatie.normVal ? 'Remmende factor voor verlaging':'Ruimte voor verlaging', cls: MACRO_DATA[r].inflatie.val>MACRO_DATA[r].inflatie.normVal?'eff-neu':'eff-pos'},
+      {icon:'📈',lbl:'Obligaties',eff:MACRO_DATA[r].inflatie.val>3?'Negatief (rente stijgt)':'Positief signaal',cls:MACRO_DATA[r].inflatie.val>3?'eff-neg':'eff-pos'},
+      {icon:'💶',lbl:'Wisselkoers',eff:MACRO_DATA[r].inflatie.val>MACRO_DATA[r].inflatie.normVal?'Lichte druk op valuta':'Neutrale invloed',cls:MACRO_DATA[r].inflatie.val>MACRO_DATA[r].inflatie.normVal?'eff-neg':'eff-neu'},
+    ]
+  },
+  werkloosheid: {
+    eyebrow:'ARBEIDSMARKT',
+    title:(r)=>`Werkloosheid: ${fmt(MACRO_DATA[r].werkloosheid.val,1)}%`,
+    body:(r)=>`<p>De <strong>werkloosheidsgraad</strong> meet het aandeel van de actieve bevolking dat werk zoekt maar geen baan heeft. Een lage werkloosheid duidt op een sterke arbeidsmarkt, maar kan via loondruk bijdragen aan hogere inflatie.</p><p>Publicatiedatum: <strong>${MACRO_DATA[r].werkloosheid.date}</strong> (bron: ${MACRO_DATA[r].werkloosheid.src}). Werkloosheidscijfers volgen de economische realiteit met ~1-2 maanden vertraging — ze zijn een <em>naijlende indicator</em>.</p>${r==='be'?'<p>In België wordt werkloosheid gemeten via <strong>RVA-statistieken</strong>. De <em>jeugdwerkloosheid</em> (15-24j) ligt op ~15%, significant hoger dan het globale cijfer.</p>':''}`,
+    norm:(r)=>MACRO_DATA[r].werkloosheid.norm,
+    impacts:(r)=>[
+      {icon:'🛍️',lbl:'Consumptie',eff:'Blijft sterk',cls:'eff-pos'},
+      {icon:'💰',lbl:'Loondruk',eff:MACRO_DATA[r].werkloosheid.val<5?'Hoog risico':'Beheersbaar',cls:MACRO_DATA[r].werkloosheid.val<5?'eff-neg':'eff-neu'},
+      {icon:'🏦',lbl:'Centraal bankbeleid',eff:'Complicerende factor',cls:'eff-neu'},
+    ]
+  },
+  bbp: {
+    eyebrow:'ECONOMISCHE GROEI · BBP',
+    title:(r)=>`BBP-groei: ${fmtPct(MACRO_DATA[r].bbp.val,1)} (kwartaal)`,
+    body:(r)=>`<p>Het <strong>bruto binnenlands product (BBP)</strong> is de totale marktwaarde van alle goederen en diensten die in een land geproduceerd worden. De kwartaalwijziging (Δ%) geeft de economische groei of krimp aan.</p><p><strong>Technische recessie</strong> = twee opeenvolgende kwartalen van negatieve groei. Met ${fmt(MACRO_DATA[r].bbp.val,1)}% groei in ${MACRO_DATA[r].bbp.date} (bron: ${MACRO_DATA[r].bbp.src}) is dat voor ${r==='eu'?'de Eurozone':r==='be'?'België':r==='us'?'de VS':'China'} momenteel niet aan de orde, maar de trend is dalend.</p><p>BBP omvat vier componenten: <strong>consumptie (C) + investeringen (I) + overheidsuitgaven (G) + netto-export (X-M)</strong>. In de Eurozone wegen consumptie en export het zwaarst.</p>`,
+    norm:(r)=>MACRO_DATA[r].bbp.norm,
+    impacts:(r)=>[
+      {icon:'📉',lbl:'Recessierisico',eff:MACRO_DATA[r].bbp.val<0.2?'Verhoogd':'Beperkt',cls:MACRO_DATA[r].bbp.val<0.2?'eff-neg':'eff-pos'},
+      {icon:'📊',lbl:'Bedrijfswinsten',eff:MACRO_DATA[r].bbp.val>0.4?'Positieve omgeving':'Trage omgeving',cls:MACRO_DATA[r].bbp.val>0.4?'eff-pos':'eff-neu'},
+      {icon:'🏦',lbl:'Centraal bankbeleid',eff:MACRO_DATA[r].bbp.val<0.3?'Stimulans verwacht':'Neutraal',cls:MACRO_DATA[r].bbp.val<0.3?'eff-pos':'eff-neu'},
+    ]
+  },
+  pmi: {
+    eyebrow:'INKOOPMANAGERSINDEX · PMI',
+    title:(r)=>`PMI: ${fmt(MACRO_DATA[r].pmi.val,1)}`,
+    body:(r)=>`<p>De <strong>Purchasing Managers' Index (PMI)</strong> is een maandelijkse enquête bij inkoopmanagers van bedrijven. Een waarde <strong>boven 50</strong> duidt op expansie; <strong>onder 50</strong> op contractie. De PMI is een van de meest betrouwbare <em>leidende indicatoren</em> — hij voorspelt economische activiteit 1-3 maanden vooruit.</p><p>Huidige waarde: <strong>${fmt(MACRO_DATA[r].pmi.val,1)}</strong> (${MACRO_DATA[r].pmi.date}, ${MACRO_DATA[r].pmi.src}) — ${MACRO_DATA[r].pmi.val>50?'expansie':'contractie'}, ${MACRO_DATA[r].pmi.val>MACRO_DATA[r].pmi.prev?'verbeterend':'verslechterend'} t.o.v. vorige meting (${fmt(MACRO_DATA[r].pmi.prev,1)}).</p><p>De PMI wordt gemeten via vragen over: nieuwe orders, productie, werkgelegenheid, leveringstermijnen en voorraden. Elke component weegt mee in het eindcijfer.</p>`,
+    norm:(r)=>MACRO_DATA[r].pmi.norm,
+    impacts:(r)=>[
+      {icon:'🏭',lbl:'Industriële activiteit',eff:MACRO_DATA[r].pmi.val>50?'Expansief':'Contracterend',cls:MACRO_DATA[r].pmi.val>50?'eff-pos':'eff-neg'},
+      {icon:'💼',lbl:'Werkgelegenheid',eff:MACRO_DATA[r].pmi.val>50?'Groeit':'Krimpt',cls:MACRO_DATA[r].pmi.val>50?'eff-pos':'eff-neg'},
+      {icon:'📦',lbl:'Nieuwe orders',eff:'Leidende indicator',cls:'eff-neu'},
+    ]
+  }
+};
+
+/* ── RENDER HOME UPDATES ── */
+async function renderHome() {
+  let fxData;
+  try { fxData = await getFX(); } catch(e) { fxData=null; }
+  const html = [];
+
+  // collect updates sorted by magnitude of change
+  const updates = [];
+  for(const [region, data] of Object.entries(MACRO_DATA)) {
+    for(const [key, d] of Object.entries(data)) {
+      const delta = d.val - d.prev;
+      const pctChg = Math.abs(delta / (d.prev||1));
+      updates.push({region,key,d,delta,pctChg});
+    }
+  }
+  updates.sort((a,b)=>b.pctChg-a.pctChg);
+
+  // show top 8
+  const shown = updates.slice(0,10);
+  const regionLabel = {eu:'🇪🇺 Eurozone',be:'🇧🇪 België',us:'🇺🇸 VS',cn:'🇨🇳 China'};
+  const keyLabel = {inflatie:'Inflatie',werkloosheid:'Werkloosheid',bbp:'BBP/kwartaal',pmi:'PMI'};
+
+  let h = '';
+  for(const u of shown) {
+    const d=u.d;
+    const delta=u.delta;
+    const sign=delta>=0?'+':'';
+    const deltaStr = `${sign}${fmt(Math.abs(delta),2)} pp`;
+    const isGood = (u.key==='werkloosheid'||u.key==='inflatie') ? delta<0 : delta>=0;
+    const cls = delta===0?'delta-neu':isGood?'delta-up':'delta-dn';
+    const colors={green:'background:var(--green-dim)',red:'background:var(--red-dim)',yellow:'background:var(--yellow-dim)',blue:'background:var(--blue-dim)',muted:'background:var(--bg-card2)'};
+    const col = d.color||'muted';
+    h+=`<div class="update-card" onclick="openExplain('${u.region}','${u.key}')">
+      <div class="update-icon" style="${colors[col]}">
+        ${u.key==='inflatie'?'📊':u.key==='werkloosheid'?'👥':u.key==='bbp'?'🏗️':'🏭'}
+      </div>
+      <div class="update-body">
+        <div class="update-label">${regionLabel[u.region]} · ${keyLabel[u.key]}</div>
+        <div class="update-title">${keyLabel[u.key]} ${regionLabel[u.region].split(' ')[1]}: <strong>${fmt(d.val,1)}${u.key==='pmi'?'':'%'}</strong></div>
+        <div class="update-meta">Gepubliceerd: ${d.date} · Bron: ${d.src}</div>
+      </div>
+      <div class="update-delta ${cls}">${delta>=0?'↑':'↓'} ${fmt(Math.abs(delta),2)}</div>
+    </div>`;
+  }
+
+  if(fxData) {
+    const eurusdChg = ((fxData.eurusd-1.085)/1.085*100);
+    h+=`<div class="update-card">
+      <div class="update-icon" style="background:var(--blue-dim)">💱</div>
+      <div class="update-body">
+        <div class="update-label">🇪🇺 Eurozone · Wisselkoersen</div>
+        <div class="update-title">EUR/USD <strong>${fxData.eurusd.toFixed(4)}</strong> · EUR/CNY <strong>${fxData.eurcny.toFixed(3)}</strong> · USD/CNY <strong>${fxData.usdcny.toFixed(3)}</strong></div>
+        <div class="update-meta">Bron: Frankfurter API · ${fxData.date}</div>
+      </div>
+      <div class="update-delta ${eurusdChg>=0?'delta-up':'delta-dn'}">${eurusdChg>=0?'↑':'↓'} ${Math.abs(eurusdChg).toFixed(2)}%</div>
+    </div>`;
+  }
+
+  $('home-updates').innerHTML = h;
+}
+renderHome();
+
+/* ── MEO ── */
+let meoLoaded = false;
+let currentRegion = 'eu';
+
+function setRegion(r) {
+  currentRegion = r;
+  document.querySelectorAll('.region-chip').forEach(c=>c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderMEO(r);
+}
+
+async function loadMEO() {
+  meoLoaded = true;
+  renderMEO(currentRegion);
+}
+
+async function renderMEO(region) {
+  $('meo-content').innerHTML = '<div class="load-screen"><div class="spin-lg"></div>Data ophalen…</div>';
+  await new Promise(r=>setTimeout(r,300)); // brief pause for UX
+
+  let fxData;
+  try { fxData = await getFX(); } catch(e) { fxData=null; }
+
+  const d = MACRO_DATA[region];
+  const regionName = {eu:'Eurozone',be:'België',us:'VS',cn:'China'}[region];
+  const rLabel = {eu:'ECB',be:'ECB',us:'Fed',cn:'PBoC'}[region];
+  const rRate = {eu:'3,25%',be:'3,25%',us:'4,50%',cn:'3,10%'}[region];
+  const rExpect = {eu:{txt:'68% kans −25 bps (okt \'26)',cls:'cut'},be:{txt:'68% kans −25 bps (okt \'26)',cls:'cut'},us:{txt:'52% kans ongewijzigd (nov \'26)',cls:'hold'},cn:{txt:'15% kans −10 bps (sep \'26)',cls:'cut'}}[region];
+  const rSrc = {eu:'ECB Watch Tool (impliciete marktprijzen)',be:'ECB Watch Tool',us:'CME FedWatch Tool',cn:'Bloomberg marktconsensus'}[region];
+
+  // Sparkline generator (mock trend data)
+  const genSpark = (val, prev, n=12) => {
+    const pts=[];
+    let v=prev*0.97;
+    for(let i=0;i<n-1;i++){
+      v+=( (val-prev)/(n-1) ) + (Math.random()-.5)*Math.abs(val-prev)*0.4;
+      pts.push(Math.max(v*0.9,v));
+    }
+    pts.push(val);
+    const mn=Math.min(...pts), mx=Math.max(...pts);
+    const range=mx-mn||0.01;
+    const w=100,h=28;
+    const coords=pts.map((p,i)=>`${(i/(n-1))*w},${h-((p-mn)/range)*(h-4)+2}`).join(' ');
+    const col=val>=prev?'var(--green)':'var(--red)';
+    return `<svg viewBox="0 0 100 28" class="graph-svg" preserveAspectRatio="none"><polyline points="${coords}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+  };
+
+  const kpiDefs=[
+    {key:'inflatie',label:'Inflatie (CPI, YoY)',unit:'%',inv:true},
+    {key:'werkloosheid',label:'Werkloosheidsgraad',unit:'%',inv:true},
+    {key:'bbp',label:d.bbp.label||'Δ% BBP/kwartaal',unit:'%',inv:false},
+    {key:'pmi',label:d.pmi.label||'PMI (samengesteld)',unit:'',inv:false},
+  ];
+
+  let kpis='';
+  for(const def of kpiDefs) {
+    const k=d[def.key];
+    const delta=k.val-k.prev;
+    const good=def.inv?delta<=0:delta>=0;
+    const dc=delta===0?'muted':good?'green':'red';
+    kpis+=`<div class="kpi-card" data-color="${k.color}" onclick="openExplain('${region}','${def.key}')">
+      <div class="kpi-label">${def.label}</div>
+      <div class="kpi-val ${k.color}">${fmt(k.val,1)}${def.unit}</div>
+      <div class="kpi-delta"><span class="${dc==='green'?'delta-up':dc==='red'?'delta-dn':''}">${delta>=0?'▲':'▼'} ${fmt(Math.abs(delta),2)}${def.unit}</span> vs ${['inflatie','werkloosheid'].includes(def.key)?'vorige mnd':'vorige periode'}</div>
+      <div class="mini-chart">${genSpark(k.val,k.prev)}</div>
+      <div class="kpi-src">Gepubliceerd: ${k.date} · ${k.src}</div>
+    </div>`;
+  }
+
+  // FX row
+  let fxHtml='';
+  if(fxData) {
+    const pairs=[
+      {pair:'EUR/USD',val:fxData.eurusd,prev:1.085,dec:4},
+      {pair:'EUR/CNY',val:fxData.eurcny,prev:7.82,dec:3},
+      {pair:'USD/CNY',val:fxData.usdcny,prev:7.25,dec:3},
+    ];
+    fxHtml=`<div class="sec-hd" style="padding-top:0;padding-bottom:8px"><div class="sec-hd-title">Wisselkoersen <span>(live)</span></div><div class="sec-hd-sub">Bron: Frankfurter API · ${fxData.date}</div></div>
+    <div class="fx-row">`;
+    for(const p of pairs){
+      const chg=((p.val-p.prev)/p.prev*100);
+      fxHtml+=`<div class="fx-card">
+        <div class="fx-pair">${p.pair}</div>
+        <div class="fx-rate">${p.val.toFixed(p.dec)}</div>
+        <div class="fx-chg ${chg>=0?'delta-up':'delta-dn'}">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)}%</div>
+      </div>`;
+    }
+    fxHtml+='</div>';
+  }
+
+  // Rate block
+  const rateHtml=`<div class="rate-block">
+    <div class="rate-block-title">Beleidsrente ${rLabel}</div>
+    <div class="rate-list">
+      <div class="rate-item">
+        <div class="rate-flag">${{eu:'🇪🇺',be:'🇪🇺',us:'🇺🇸',cn:'🇨🇳'}[region]}</div>
+        <div class="rate-info">
+          <div class="rate-name">${rLabel} beleidsrente</div>
+          <div class="rate-val">${rRate}</div>
+        </div>
+        <div class="rate-bar-wrap">
+          <div class="rate-bar-track"><div class="rate-bar-fill" style="width:${({eu:65,be:65,us:90,cn:62}[region])}%"></div></div>
+        </div>
+        <div class="rate-expect ${rExpect.cls}">${rExpect.txt}</div>
+      </div>
+    </div>
+    <div class="rate-src">Verwachting: ${rSrc}</div>
+  </div>`;
+
+  // Cycle
+  const cycles=['Expansie','Piek','Recessie','Herstel'];
+  const activeIdx={eu:3,be:3,us:0,cn:3}[region]; // EU/BE: late herstel; US: expansie; CN: herstel
+  let cyclePhases=cycles.map((c,i)=>`<div class="cycle-phase ${i===activeIdx?'active':''}">${c}</div>`).join('');
+  const cycleUitleg={
+    eu:`<strong>Late herstel fase.</strong> De Eurozone groeit positief maar onder trend. Inflatie daalt richting doel. Centrale bank begint rente te verlagen. Typische kenmerken: toenemend consumentenvertrouwen, normalisering van kredietmarkt.`,
+    be:`<strong>Late herstel fase.</strong> België volgt de Eurozone-trend. Hogere loonkostendruk door indexering is een rem op groei, maar werkloosheid blijft laag. Exportgerichte sectoren profiteren van dalende euro.`,
+    us:`<strong>Expansie fase.</strong> Amerikaanse economie groeit boven trend. Arbeidsmarkt sterk. Fed bevindt zich in "higher for longer" modus, maar ruimte voor verlaging neemt toe naarmate inflatie daalt.`,
+    cn:`<strong>Herstel fase — met risico's.</strong> China toont lichte verbetering maar de vastgoedcrisis weegt. Deflatoir risico, zwakke binnenlandse vraag en overcapaciteit in industrie zijn structurele uitdagingen.`,
+  }[region];
+
+  $('meo-content').innerHTML = `
+    <div class="sec-hd" style="padding-top:4px;padding-bottom:8px"><div class="sec-hd-title">Kernindicatoren <span>${regionName}</span></div><div class="sec-hd-sub">Klik voor uitleg + context</div></div>
+    <div class="kpi-grid">${kpis}</div>
+    ${fxHtml}
+    ${rateHtml}
+    <div class="sec-hd" style="padding-top:4px;padding-bottom:8px"><div class="sec-hd-title">Conjunctuurcyclus</div></div>
+    <div class="cycle-block">
+      <div class="cycle-title">Huidige fase — ${regionName}</div>
+      <div class="cycle-phases">${cyclePhases}</div>
+      <div class="cycle-uitleg">${cycleUitleg}</div>
+    </div>
+  `;
+}
+
+/* ── EXPLAIN SHEET ── */
+function openExplain(region, key) {
+  const u=UITLEG[key];
+  if(!u) return;
+  $('shEyebrow').textContent=u.eyebrow;
+  $('shTitle').textContent=u.title(region);
+  const norm=u.norm(region);
+  const d=MACRO_DATA[region][key];
+  $('shNorm').innerHTML=`<div class="sheet-norm-val">${fmt(d.val,1)}${key==='pmi'?'':key==='bbp'?'%/kw':'%'}</div><div class="sheet-norm-sep">|</div><div style="font-size:12px;line-height:1.5;"><strong style="color:var(--ink-muted);font-size:10px;display:block;margin-bottom:2px">NORM</strong>${norm}</div>`;
+  $('shBody').innerHTML=u.body(region);
+  const imps=u.impacts(region);
+  $('shImpact').innerHTML=imps.map(i=>`<div class="impact-cell"><div class="impact-icon">${i.icon}</div><div class="impact-lbl">${i.lbl}</div><div class="impact-eff ${i.cls}">${i.eff}</div></div>`).join('');
+  $('overlay').classList.add('open');
+}
+function closeSheet(e,force){
+  if(force||(e&&e.target===$('overlay'))) $('overlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KALENDER
+═══════════════════════════════════════════════════════════ */
+let kalLoaded=false, kalFilter='all';
+
+const EVENTS=[
+  // September 2026
+  {date:'2026-09-22',time:'14:30',name:'Fed-toespraak Jerome Powell',region:'🇺🇸 VS',cat:'rente',imp:'high',prev:null,cons:'Hawkish toon verwacht',actual:null},
+  {date:'2026-09-24',time:'11:00',name:'Flash PMI Eurozone (sep)',region:'🇪🇺 EU',cat:'pmi',imp:'high',prev:'49,3',cons:'49,5',actual:null},
+  {date:'2026-09-24',time:'15:45',name:'Flash PMI VS (sep)',region:'🇺🇸 VS',cat:'pmi',imp:'med',prev:'52,1',cons:'52,0',actual:null},
+  {date:'2026-09-26',time:'10:00',name:'IFO Ondernemersklimaat (sep)',region:'🇩🇪 DE',cat:'pmi',imp:'med',prev:'86,4',cons:'86,8',actual:null},
+  // Oktober 2026
+  {date:'2026-10-02',time:'14:30',name:'NFP Arbeidsmarktrapport VS (sep)',region:'🇺🇸 VS',cat:'arbeid',imp:'high',prev:'+142K',cons:'+150K',actual:null},
+  {date:'2026-10-02',time:'14:30',name:'Werkloosheidsgraad VS (sep)',region:'🇺🇸 VS',cat:'arbeid',imp:'high',prev:'4,2%',cons:'4,2%',actual:null},
+  {date:'2026-10-10',name:'Vergadering IMF/Wereldbank (jaarlijks)',region:'🌐 Internationaal',cat:'rente',imp:'med',prev:null,cons:'Outlook publicatie',actual:null},
+  {date:'2026-10-16',time:'10:00',name:'Inflatie Eurozone final (sep)',region:'🇪🇺 EU',cat:'inflatie',imp:'high',prev:'2,4%',cons:'2,3%',actual:null},
+  {date:'2026-10-16',time:'14:30',name:'CPI VS (sep)',region:'🇺🇸 VS',cat:'inflatie',imp:'high',prev:'2,9%',cons:'2,8%',actual:null},
+  {date:'2026-10-24',time:'09:30',name:'ECB Rentebesluit',region:'🇪🇺 EU',cat:'rente',imp:'high',prev:'3,25%',cons:'3,00% (−25 bps)',actual:null},
+  {date:'2026-10-24',time:'14:30',name:'Flash BBP Eurozone Q3',region:'🇪🇺 EU',cat:'bbp',imp:'high',prev:'+0,3%',cons:'+0,3%',actual:null},
+  {date:'2026-10-30',time:'14:30',name:'BBP VS Q3 (eerste raming)',region:'🇺🇸 VS',cat:'bbp',imp:'high',prev:'+2,8%',cons:'+2,5%',actual:null},
+  // November
+  {date:'2026-11-05',name:'FOMC Rentebesluit',region:'🇺🇸 VS',cat:'rente',imp:'high',prev:'4,50%',cons:'4,50% of 4,25%',actual:null},
+  {date:'2026-11-13',time:'14:30',name:'CPI VS (okt)',region:'🇺🇸 VS',cat:'inflatie',imp:'high',prev:'2,8%',cons:'2,7%',actual:null},
+  {date:'2026-11-28',time:'10:00',name:'Inflatie Eurozone (okt)',region:'🇪🇺 EU',cat:'inflatie',imp:'high',prev:'2,3%',cons:'2,2%',actual:null},
+];
+
+function setKalFilter(f){
+  kalFilter=f;
+  document.querySelectorAll('.kal-chip').forEach(c=>c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderKalender();
+}
+
+function renderKalender(){
+  kalLoaded=true;
+  const filtered=kalFilter==='all'?EVENTS:EVENTS.filter(e=>e.cat===kalFilter);
+  // group by date
+  const groups={};
+  for(const e of filtered){
+    if(!groups[e.date]) groups[e.date]=[];
+    groups[e.date].push(e);
+  }
+  let html='';
+  const days=Object.keys(groups).sort();
+  for(const day of days){
+    const d=new Date(day+'T12:00:00');
+    const label=d.toLocaleDateString('nl-BE',{weekday:'long',day:'numeric',month:'long'});
+    html+=`<div class="kal-group"><div class="kal-day-hd">${label}</div>`;
+    for(const ev of groups[day]){
+      const impCls=ev.imp==='high'?'imp-high':ev.imp==='med'?'imp-med':'imp-low';
+      html+=`<div class="kal-event">
+        <div class="kal-time">${ev.time||'–'}</div>
+        <div class="kal-imp ${impCls}"></div>
+        <div class="kal-info">
+          <div class="kal-name">${ev.name}</div>
+          <div class="kal-region">${ev.region}</div>
+          <div class="kal-vals">
+            ${ev.prev?`<span>Vorig: <strong>${ev.prev}</strong></span>`:''}
+            ${ev.cons?`<span>Consensus: <strong>${ev.cons}</strong></span>`:''}
+            ${ev.actual?`<span>Actueel: <strong style="color:var(--green)">${ev.actual}</strong></span>`:''}
+          </div>
+        </div>
+        <div class="kal-tag">${ev.cat.toUpperCase()}</div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  if(!html) html='<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-txt">Geen evenementen in deze categorie.</div></div>';
+  $('kal-content').innerHTML=html;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DEBRIEF ANALYSE
+═══════════════════════════════════════════════════════════ */
+async function analyseArtikel(){
+  const txt=$('dbPaste').value.trim();
+  if(!txt) return;
+  $('dbBtn').disabled=true;
+  $('dbBtnTxt').textContent='Analyseren…';
+  $('dbSpinner').style.display='flex';
+  $('dbResult').classList.remove('visible');
+
+  try {
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system:`Je bent DeEconoom, een educatief economisch analysetool. Je analyseert krantenartikelen en geeft een GESTRUCTUREERDE, FEITELIJKE, EDUCATIEVE uitleg.
+
+REGELS:
+- Schrijf UITSLUITEND in het Nederlands
+- Gebruik CONCRETE CIJFERS, geen vage formuleringen
+- Wees EDUCATIEF: leg de economische begrippen die in het artikel voorkomen uit
+- Maak EXPLICIETE verbanden met macro-economische concepten
+- Geen AI SLOP, geen overdreven taal, geen onnodige introductiezinnen
+- Maximaal 3-4 korte paragrafen
+
+STRUCTUUR (gebruik exact dit HTML-formaat):
+<h4>Wat er speelt</h4>
+<p>[1-2 zinnen: kern van het artikel in economische termen]</p>
+<h4>Economische concepten</h4>
+<p>[Leg 2-3 relevante begrippen uit die in dit artikel spelen, met definitie en verband]</p>
+<h4>Context &amp; historische norm</h4>
+<p>[Hoe verhoudt dit zich tot historische cijfers of economische normen?]</p>
+<h4>Macro-impact</h4>
+<p>[Wat zijn de bredere economische gevolgen? — bondig, concreet]</p>`,
+        messages:[{role:'user',content:`Analyseer dit artikel educatief:\n\n${txt}`}]
+      })
+    });
+    const data=await resp.json();
+    const content=data?.content?.[0]?.text||'Geen analyse ontvangen.';
+
+    $('dbResultTitle').textContent='Educatieve analyse';
+    $('dbResultBody').innerHTML=content;
+
+    // extract tags from content
+    const tagMap={'inflatie':'🔴 Inflatie','rente':'🏦 Rente','bbp':'📊 BBP','werkloosheid':'👥 Arbeidsmarkt','handel':'📦 Handel','euro':'💶 Euro','groei':'📈 Groei','schuld':'💳 Schuld','beleid':'🏛️ Beleid'};
+    const tags=[];
+    const cl=content.toLowerCase();
+    for(const [k,v] of Object.entries(tagMap)) if(cl.includes(k)) tags.push(v);
+    $('dbResultTags').innerHTML=tags.slice(0,5).map(t=>`<span class="db-result-tag">${t}</span>`).join('');
+
+    $('dbResult').classList.add('visible');
+  } catch(e){
+    $('dbResultTitle').textContent='Fout';
+    $('dbResultBody').innerHTML=`<p>Analyse niet beschikbaar: ${e.message}</p>`;
+    $('dbResult').classList.add('visible');
+  }
+
+  $('dbBtn').disabled=false;
+  $('dbBtnTxt').textContent='Analyseer';
+  $('dbSpinner').style.display='none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHATBOT / LEERTOOL
+═══════════════════════════════════════════════════════════ */
+const CONCEPTS=[
+  {icon:'📉',name:'Phillips-curve'},
+  {icon:'🏦',name:'Taylor-regel'},
+  {icon:'💹',name:'IS-LM model'},
+  {icon:'📊',name:'Kwantitatieve versoepeling'},
+  {icon:'⚖️',name:'Fiscaal multiplier'},
+  {icon:'🔄',name:'Conjunctuurcyclus'},
+  {icon:'💱',name:'Koopkrachtpariteit'},
+  {icon:'📈',name:'Okun\'s wet'},
+];
+
+let chatHistory=[];
+let savedChats=[];
+
+try { savedChats=JSON.parse(localStorage.getItem('deeconomist_chats')||'[]'); } catch{}
+
+// render concept grid
+$('conceptGrid').innerHTML=CONCEPTS.map(c=>`<button class="concept-chip" onclick="askConcept('${c.name}')">
+  <span class="concept-chip-icon">${c.icon}</span>${c.name}
+</button>`).join('');
+
+function askConcept(name){
+  $('chatInput').value=`Leg mij ${name} uit`;
+  sendChat();
+}
+
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+function chatKeyDown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+}
+
+function renderSavedChats(){
+  if(!savedChats.length){
+    $('chatSaves').innerHTML='';
+    return;
+  }
+  $('chatSaves').innerHTML=`<div class="chat-saves-hd">Opgeslagen gesprekken</div>`+
+    savedChats.map((s,i)=>`<div class="saved-chat-item" onclick="loadChat(${i})">
+      <div class="saved-chat-icon">💬</div>
+      <div class="saved-chat-name">${s.title}</div>
+      <div class="saved-chat-date">${s.date}</div>
+    </div>`).join('');
+}
+
+function loadChat(i){
+  chatHistory=savedChats[i].messages;
+  renderChatMsgs();
+}
+
+function renderChatMsgs(){
+  const box=$('chatMsgs');
+  box.innerHTML=chatHistory.map(m=>`<div class="msg ${m.role==='user'?'user':'ai'}">${m.role==='user'?m.content:m.content}</div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function sendChat(){
+  const inp=$('chatInput');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  inp.value='';
+  inp.style.height='auto';
+  $('chatSend').disabled=true;
+
+  chatHistory.push({role:'user',content:txt});
+  renderChatMsgs();
+
+  // typing indicator
+  const typingEl=document.createElement('div');
+  typingEl.className='msg-typing';
+  typingEl.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  $('chatMsgs').appendChild(typingEl);
+  $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
+
+  try {
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system:`Je bent DeEconoom, een educatieve macro-economie tutor. Je geeft gestructureerde, feitelijke uitleg over economische concepten, modellen en theorieën.
+
+KERNREGELS:
+- Schrijf UITSLUITEND in het Nederlands
+- Geen AI SLOP, geen onnodige inleidingen ("Zeker!", "Geweldig dat je dit vraagt" — nooit)
+- Begin DIRECT met de uitleg
+- Gebruik CONCRETE CIJFERS en historische voorbeelden
+- Wees EDUCATIEF: definieer termen, toon verbanden, geef context
+- Gebruik HTML voor structuur: <h4>, <p>, <strong>
+- Maximaal 4-5 paragrafen. Beknopt maar compleet.
+
+Toegestane structuur:
+<h4>Definitie</h4><p>...</p>
+<h4>Hoe het werkt</h4><p>...</p>
+<h4>Historisch voorbeeld</h4><p>...</p>
+<h4>Relevantie vandaag</h4><p>...</p>`,
+        messages:chatHistory.map(m=>({role:m.role,content:m.content}))
+      })
+    });
+    const data=await resp.json();
+    const reply=data?.content?.[0]?.text||'Geen antwoord ontvangen.';
+    typingEl.remove();
+    chatHistory.push({role:'assistant',content:reply});
+    renderChatMsgs();
+
+    // Auto-save if >1 exchange
+    if(chatHistory.length>=2){
+      const title=chatHistory[0].content.slice(0,40)+(chatHistory[0].content.length>40?'…':'');
+      const existing=savedChats.findIndex(s=>s.title===title);
+      const entry={title,date:new Date().toLocaleDateString('nl-BE'),messages:chatHistory};
+      if(existing>=0) savedChats[existing]=entry;
+      else savedChats.unshift(entry);
+      savedChats=savedChats.slice(0,10);
+      try{localStorage.setItem('deeconomist_chats',JSON.stringify(savedChats));}catch{}
+      renderSavedChats();
+    }
+  } catch(e){
+    typingEl.remove();
+    chatHistory.push({role:'assistant',content:`<p>Fout: ${e.message}</p>`});
+    renderChatMsgs();
+  }
+  $('chatSend').disabled=false;
+}
+</script>
+</body>
+</html>
