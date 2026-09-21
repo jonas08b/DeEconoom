@@ -575,14 +575,16 @@ const CYCLE_PHASES = [
 
 /* ═══════════════════════════════════════════════════
    FX — FRANKFURTER API (live + 90-daagse history)
+   Gebruik api.frankfurter.dev (CORS-correct, geen 301)
 ═══════════════════════════════════════════════════ */
+const FX_BASE = 'https://api.frankfurter.dev';
 const fxCache = {};
 
 async function fetchFX() {
   if(fxCache.live && Date.now()-fxCache.live.ts < 300000) return fxCache.live.data;
   const [r1, r2] = await Promise.all([
-    fetch('https://api.frankfurter.app/latest?from=EUR&to=USD,CNY', {signal:AbortSignal.timeout(8000)}),
-    fetch('https://api.frankfurter.app/latest?from=USD&to=CNY',     {signal:AbortSignal.timeout(8000)})
+    fetch(`${FX_BASE}/v1/latest?base=EUR&symbols=USD,CNY`, {signal:AbortSignal.timeout(8000)}),
+    fetch(`${FX_BASE}/v1/latest?base=USD&symbols=CNY`,     {signal:AbortSignal.timeout(8000)})
   ]);
   const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
   const data = { eurusd: d1.rates.USD, eurcny: d1.rates.CNY, usdcny: d2.rates.CNY, date: d1.date };
@@ -590,53 +592,176 @@ async function fetchFX() {
   return data;
 }
 
+async function fetchFXPrev() {
+  // Gisteren ophalen voor correcte dagdelta
+  if(fxCache.prev && Date.now()-fxCache.prev.ts < 3600000) return fxCache.prev.data;
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const twoDaysAgo = new Date(Date.now()-2*86400000).toISOString().slice(0,10);
+  // Probeer gisteren, anders eergisteren (weekend)
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${FX_BASE}/v1/${yesterday}?base=EUR&symbols=USD,CNY`, {signal:AbortSignal.timeout(8000)}),
+      fetch(`${FX_BASE}/v1/${yesterday}?base=USD&symbols=CNY`,     {signal:AbortSignal.timeout(8000)})
+    ]);
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+    if(d1.rates) {
+      const data = { eurusd: d1.rates.USD, eurcny: d1.rates.CNY, usdcny: d2.rates.CNY };
+      fxCache.prev = { data, ts: Date.now() };
+      return data;
+    }
+  } catch {}
+  // Fallback: eergisteren
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${FX_BASE}/v1/${twoDaysAgo}?base=EUR&symbols=USD,CNY`, {signal:AbortSignal.timeout(8000)}),
+      fetch(`${FX_BASE}/v1/${twoDaysAgo}?base=USD&symbols=CNY`,     {signal:AbortSignal.timeout(8000)})
+    ]);
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+    if(d1.rates) {
+      const data = { eurusd: d1.rates.USD, eurcny: d1.rates.CNY, usdcny: d2.rates.CNY };
+      fxCache.prev = { data, ts: Date.now() };
+      return data;
+    }
+  } catch {}
+  return null;
+}
+
 async function fetchFXHistory(days=90) {
   if(fxCache.hist && Date.now()-fxCache.hist.ts < 3600000) return fxCache.hist.data;
   const end = new Date();
   const start = new Date(end.getTime() - days*86400000);
   const fmt2 = d => d.toISOString().slice(0,10);
-  const r = await fetch(`https://api.frankfurter.app/${fmt2(start)}..${fmt2(end)}?from=EUR&to=USD,CNY`, {signal:AbortSignal.timeout(10000)});
-  const d = await r.json();
-  const dates = Object.keys(d.rates).sort();
-  const usd = dates.map(dt=>d.rates[dt].USD);
-  const cny = dates.map(dt=>d.rates[dt].CNY);
-  // USD/CNY derived
-  const [r2] = await Promise.all([
-    fetch(`https://api.frankfurter.app/${fmt2(start)}..${fmt2(end)}?from=USD&to=CNY`, {signal:AbortSignal.timeout(10000)})
+  const [r1, r2] = await Promise.all([
+    fetch(`${FX_BASE}/v1/${fmt2(start)}..${fmt2(end)}?base=EUR&symbols=USD,CNY`, {signal:AbortSignal.timeout(10000)}),
+    fetch(`${FX_BASE}/v1/${fmt2(start)}..${fmt2(end)}?base=USD&symbols=CNY`,     {signal:AbortSignal.timeout(10000)})
   ]);
-  const d2 = await r2.json();
-  const ucny = Object.keys(d2.rates).sort().map(dt=>d2.rates[dt].CNY);
+  const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+  const dates = Object.keys(d1.rates).sort();
+  const usd  = dates.map(dt=>d1.rates[dt].USD);
+  const cny  = dates.map(dt=>d1.rates[dt].CNY);
+  const dates2 = Object.keys(d2.rates).sort();
+  const ucny = dates2.map(dt=>d2.rates[dt].CNY);
   const data = { dates, eurusd:usd, eurcny:cny, usdcny:ucny };
   fxCache.hist = { data, ts: Date.now() };
   return data;
 }
 
 /* ═══════════════════════════════════════════════════
-   ECB API  (beleidsrente + EU HICP)
+   ECB API  (beleidsrente + inflatie EU + BE + werkloosheid)
 ═══════════════════════════════════════════════════ */
+function parseECBSeries(d) {
+  const times = d.structure.dimensions.observation[0].values;
+  const series = Object.values(d.dataSets[0].series)[0];
+  const pairs = times.map((t,i) => ({
+    period: t.id,
+    val: series.observations[String(i)]?.[0] ?? null
+  })).filter(p=>p.val!==null);
+  return pairs;
+}
+
 async function fetchECBRate() {
   try {
     const r = await fetch('https://data-api.ecb.europa.eu/service/data/FM/B.U2.EUR.RT0.DZ.N.R.S.B.N.A?format=jsondata&lastNObservations=12', {signal:AbortSignal.timeout(6000)});
     const d = await r.json();
-    const times = d.structure.dimensions.observation[0].values;
-    const series = Object.values(d.dataSets[0].series)[0];
-    const vals = times.map((t,i) => series.observations[String(i)]?.[0] ?? null).filter(v=>v!==null);
-    if(vals.length) return { current: vals[vals.length-1], hist: vals };
+    const pairs = parseECBSeries(d);
+    if(pairs.length) return { current: pairs[pairs.length-1].val, hist: pairs.map(p=>p.val), period: pairs[pairs.length-1].period };
   } catch {}
   return null;
 }
 
 async function fetchECBInflation() {
+  // EU HICP (Eurozone)
   try {
     const r = await fetch('https://data-api.ecb.europa.eu/service/data/ICP/M.U2.N.000000.4.ANR?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
     const d = await r.json();
-    const times = d.structure.dimensions.observation[0].values;
-    const series = Object.values(d.dataSets[0].series)[0];
-    const pairs = times.map((t,i) => ({ period:t.id, val: series.observations[String(i)]?.[0] ?? null }))
-                       .filter(p=>p.val!==null);
+    const pairs = parseECBSeries(d);
     if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
   } catch {}
   return null;
+}
+
+async function fetchECBInflationBE() {
+  // België HICP via ECB (ISO: BE)
+  try {
+    const r = await fetch('https://data-api.ecb.europa.eu/service/data/ICP/M.BE.N.000000.4.ANR?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
+    const d = await r.json();
+    const pairs = parseECBSeries(d);
+    if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
+  } catch {}
+  return null;
+}
+
+async function fetchECBUnemploymentEU() {
+  // Eurozone werkloosheidsgraad (maandelijks, seizoensgecorrigeerd)
+  try {
+    const r = await fetch('https://data-api.ecb.europa.eu/service/data/LFSI/M.I8.S.UNEHRT.TOTAL0.15_74.T?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
+    const d = await r.json();
+    const pairs = parseECBSeries(d);
+    if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
+  } catch {}
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════
+   FRED API — VS indicatoren (gratis, CORS-correct)
+   Geen API-key nodig voor publieke reeksen
+═══════════════════════════════════════════════════ */
+const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const fredCache = {};
+
+async function fetchFRED(seriesId, obs=24) {
+  if(fredCache[seriesId] && Date.now()-fredCache[seriesId].ts < 3600000) return fredCache[seriesId].data;
+  try {
+    const url = `${FRED_BASE}?id=${seriesId}`;
+    const r = await fetch(url, {signal:AbortSignal.timeout(8000)});
+    const text = await r.text();
+    const lines = text.trim().split('\n').slice(1); // skip header
+    const valid = lines
+      .map(l => { const [date, val] = l.split(','); return { date: date.trim(), val: parseFloat(val) }; })
+      .filter(x => !isNaN(x.val));
+    const recent = valid.slice(-obs);
+    if(!recent.length) return null;
+    const data = {
+      current: recent[recent.length-1].val,
+      prev: recent[recent.length-2]?.val ?? null,
+      period: recent[recent.length-1].date,
+      hist: recent.map(x=>x.val)
+    };
+    fredCache[seriesId] = { data, ts: Date.now() };
+    return data;
+  } catch {}
+  return null;
+}
+
+// FRED series-IDs voor VS:
+// CPIAUCSL = CPI YoY (level) → we berekenen YoY zelf
+// UNRATE   = werkloosheidsgraad
+// A191RL1Q225SBEA = reëel BBP kwartaalgroei
+// MANEMP / ISM PMI niet op FRED als index → we houden PMI hardcoded (ISM heeft geen open API)
+
+async function fetchUSData() {
+  const [cpiRaw, unemployment, gdp] = await Promise.allSettled([
+    fetchFRED('CPIAUCSL', 26),   // 26 obs = 2 jaar voor YoY berekening
+    fetchFRED('UNRATE', 18),
+    fetchFRED('A191RL1Q225SBEA', 12) // kwartaal BBP groei
+  ]).then(r => r.map(x => x.status==='fulfilled' ? x.value : null));
+
+  let inflation = null;
+  if(cpiRaw && cpiRaw.hist.length >= 14) {
+    const h = cpiRaw.hist;
+    const cur = h[h.length-1];
+    const yr  = h[h.length-13]; // 12 maanden geleden
+    const prv = h[h.length-2];
+    const yrPrev = h[h.length-14];
+    const yoy     = ((cur-yr)/yr*100);
+    const yoyPrev = ((prv-yrPrev)/yrPrev*100);
+    // Bouw YoY history: voor elke maand waarvoor 12m eerder beschikbaar
+    const yoyHist = [];
+    for(let i=12; i<h.length; i++) yoyHist.push(+((h[i]-h[i-12])/h[i-12]*100).toFixed(2));
+    inflation = { current: +yoy.toFixed(2), prev: +yoyPrev.toFixed(2), period: cpiRaw.period, hist: yoyHist };
+  }
+
+  return { inflation, unemployment, gdp };
 }
 
 /* ═══════════════════════════════════════════════════
@@ -659,8 +784,8 @@ function switchTab(id, btn) {
    HOME OVERZICHT
 ═══════════════════════════════════════════════════ */
 async function renderHome() {
-  let fx = null;
-  try { fx = await fetchFX(); } catch {}
+  let fx = null, fxPrev = null;
+  try { [fx, fxPrev] = await Promise.all([fetchFX(), fetchFXPrev()]); } catch {}
 
   const regionLabel = {eu:'🇪🇺 Eurozone',be:'🇧🇪 België',us:'🇺🇸 VS',cn:'🇨🇳 China'};
   const keyIcon = {inflatie:'📊',werkloosheid:'👥',bbp:'🏗️',pmi:'🏭'};
@@ -669,15 +794,16 @@ async function renderHome() {
   let html = '';
   // FX card eerst als live data beschikbaar
   if(fx) {
-    const prev = { eurusd:1.085, eurcny:7.82, usdcny:7.25 };
-    const chg = ((fx.eurusd-prev.eurusd)/prev.eurusd*100);
+    const prevEurUsd = fxPrev?.eurusd ?? 1.085;
+    const chg = ((fx.eurusd - prevEurUsd) / prevEurUsd * 100);
     const cls = chg>=0?'delta-up':'delta-dn';
+    const deltaNote = fxPrev ? 'dag Δ' : 'Δ';
     html += `<div class="update-card" onclick="switchTab('meo',document.querySelectorAll('.tab-btn')[1]);setRegionDirect('eu')">
       <div class="update-icon" style="background:var(--blue-dim)">💱</div>
       <div class="update-body">
-        <div class="update-label">Wisselkoersen · live</div>
+        <div class="update-label">Wisselkoersen · live · ${fx.date}</div>
         <div class="update-title">EUR/USD <strong>${fx.eurusd.toFixed(4)}</strong> &nbsp;·&nbsp; EUR/CNY <strong>${fx.eurcny.toFixed(3)}</strong> &nbsp;·&nbsp; USD/CNY <strong>${fx.usdcny.toFixed(3)}</strong></div>
-        <div class="update-meta">Frankfurter API · ${fx.date}</div>
+        <div class="update-meta">Frankfurter API · ${deltaNote} EUR/USD vs vorige slotkoers</div>
       </div>
       <div class="update-delta ${cls}">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)}%</div>
     </div>`;
@@ -712,18 +838,26 @@ renderHome();
 /* ═══════════════════════════════════════════════════
    MEO — LOAD + RENDER
 ═══════════════════════════════════════════════════ */
-let liveECBRate=null, liveECBInflation=null, liveFX=null, liveFXHist=null;
+let liveECBRate=null, liveECBInflation=null, liveECBInflationBE=null, liveECBUnemploymentEU=null;
+let liveFX=null, liveFXPrev=null, liveFXHist=null;
+let liveUSData=null;
 
 async function loadMEO() {
   meoLoaded = true;
-  // Parallel fetches — ECB rate, ECB inflation, FX live + history
   $('meo-content').innerHTML = '<div class="load-screen"><div class="spin-lg"></div>Live data ophalen…</div>';
-  [liveECBRate, liveECBInflation, liveFX, liveFXHist] = await Promise.allSettled([
+  const results = await Promise.allSettled([
     fetchECBRate(),
     fetchECBInflation(),
+    fetchECBInflationBE(),
+    fetchECBUnemploymentEU(),
     fetchFX(),
-    fetchFXHistory(90)
-  ]).then(results => results.map(r => r.status==='fulfilled' ? r.value : null));
+    fetchFXPrev(),
+    fetchFXHistory(90),
+    fetchUSData()
+  ]).then(r => r.map(x => x.status==='fulfilled' ? x.value : null));
+
+  [liveECBRate, liveECBInflation, liveECBInflationBE, liveECBUnemploymentEU,
+   liveFX, liveFXPrev, liveFXHist, liveUSData] = results;
   renderMEO(currentRegion);
 }
 
@@ -748,36 +882,81 @@ function renderMEO(region) {
   const d = MD[region];
   const regionName = {eu:'Eurozone',be:'België',us:'VS',cn:'China'}[region];
 
-  /* ── Merge live ECB data waar van toepassing ── */
-  let inflatieVal = d.inflatie.val;
-  let inflatieHist = [...SERIES[region].inflatie];
-  let ecbHist = RATES.ecb.hist;
+  /* ── Merge live API data per regio ── */
+  // Werkkopie van MD zodat we live waarden kunnen injecteren zonder MD te muteren
+  const live = JSON.parse(JSON.stringify(d));
 
   if(region === 'eu') {
     if(liveECBInflation?.current) {
-      inflatieVal = liveECBInflation.current;
-      if(liveECBInflation.hist?.length) inflatieHist = liveECBInflation.hist;
+      live.inflatie.val    = +liveECBInflation.current.toFixed(1);
+      live.inflatie.date   = liveECBInflation.period || live.inflatie.date;
+      live.inflatie._live  = true;
+      live.inflatie._hist  = liveECBInflation.hist;
+    }
+    if(liveECBUnemploymentEU?.current) {
+      live.werkloosheid.val   = +liveECBUnemploymentEU.current.toFixed(1);
+      live.werkloosheid.date  = liveECBUnemploymentEU.period || live.werkloosheid.date;
+      live.werkloosheid._live = true;
+      live.werkloosheid._hist = liveECBUnemploymentEU.hist;
     }
     if(liveECBRate?.current) {
-      RATES.ecb.hist = liveECBRate.hist || ecbHist;
+      RATES.ecb.hist = liveECBRate.hist || RATES.ecb.hist;
+      RATES.ecb.val  = +liveECBRate.current.toFixed(2);
+    }
+  }
+
+  if(region === 'be') {
+    if(liveECBInflationBE?.current) {
+      live.inflatie.val   = +liveECBInflationBE.current.toFixed(1);
+      live.inflatie.date  = liveECBInflationBE.period || live.inflatie.date;
+      live.inflatie.src   = 'ECB/Eurostat (HICP BE)';
+      live.inflatie._live = true;
+      live.inflatie._hist = liveECBInflationBE.hist;
+    }
+  }
+
+  if(region === 'us' && liveUSData) {
+    if(liveUSData.inflation?.current != null) {
+      live.inflatie.val   = +liveUSData.inflation.current.toFixed(1);
+      live.inflatie.prev  = +liveUSData.inflation.prev.toFixed(1);
+      live.inflatie.date  = liveUSData.inflation.period || live.inflatie.date;
+      live.inflatie.src   = 'BLS via FRED';
+      live.inflatie._live = true;
+      live.inflatie._hist = liveUSData.inflation.hist;
+    }
+    if(liveUSData.unemployment?.current != null) {
+      live.werkloosheid.val   = +liveUSData.unemployment.current.toFixed(1);
+      live.werkloosheid.prev  = liveUSData.unemployment.prev != null ? +liveUSData.unemployment.prev.toFixed(1) : live.werkloosheid.prev;
+      live.werkloosheid.date  = liveUSData.unemployment.period || live.werkloosheid.date;
+      live.werkloosheid.src   = 'BLS via FRED';
+      live.werkloosheid._live = true;
+      live.werkloosheid._hist = liveUSData.unemployment.hist;
+    }
+    if(liveUSData.gdp?.current != null) {
+      live.bbp.val   = +liveUSData.gdp.current.toFixed(1);
+      live.bbp.prev  = liveUSData.gdp.prev != null ? +liveUSData.gdp.prev.toFixed(1) : live.bbp.prev;
+      live.bbp.date  = liveUSData.gdp.period || live.bbp.date;
+      live.bbp.src   = 'BEA via FRED';
+      live.bbp._live = true;
+      live.bbp._hist = liveUSData.gdp.hist;
     }
   }
 
   /* ── FX data ── */
-  const fx = liveFX || null;
+  const fx  = liveFX  || null;
+  const fxP = liveFXPrev || null;
   const fxH = liveFXHist || null;
 
   /* ── KPI cards ── */
   const kpis = ['inflatie','werkloosheid','bbp','pmi'];
   let kpiHtml = '<div class="kpi-grid">';
   for(const key of kpis) {
-    const k = {...d[key]};
-    if(key==='inflatie' && region==='eu' && liveECBInflation?.current) k.val = inflatieVal;
+    const k = live[key];
     const delta = k.val - k.prev;
     const good = k.inv ? delta<0 : delta>0;
-    const neutralD = delta===0;
+    const neutralD = Math.abs(delta) < 0.005;
     const deltaClass = neutralD?'delta-neu':good?'delta-up':'delta-dn';
-    const seriesData = key==='inflatie' && region==='eu' && liveECBInflation?.hist ? inflatieHist : SERIES[region][key];
+    const seriesData = k._hist?.length ? k._hist : SERIES[region][key];
     const sparkColor = k.color==='green'?C.green:k.color==='red'?C.red:k.color==='yellow'?C.yellow:k.color==='blue'?C.blue:C.muted;
 
     // Norm pill
@@ -790,17 +969,18 @@ function renderMEO(region) {
       normPill = normDiff>0?`+${fmt(normDiff,1)} boven norm`:`${fmt(normDiff,1)} onder norm`;
       normClass = normDiff>0?'kpi-norm-above':'kpi-norm-below';
     } else {
-      normPill = normDiff>=0?`boven norm`:`onder norm`;
+      normPill = normDiff>=0?'boven norm':'onder norm';
       normClass = normDiff>=0?'kpi-norm-at':'kpi-norm-above';
     }
 
-    const liveNote = (key==='inflatie' && region==='eu' && liveECBInflation) ? '<span class="live-badge" style="margin-left:4px"><span class="live-dot"></span>ECB API</span>' : '';
+    const liveNote = k._live ? `<span class="live-badge" style="margin-left:4px"><span class="live-dot"></span>live</span>` : '';
+    const deltaLabel = key==='bbp' ? 'vs vorig kwartaal' : 'vs vorige meting';
 
     kpiHtml += `<div class="kpi-card" data-color="${k.color}" onclick="openExplain('${region}','${key}')">
       <div class="kpi-label">${k.label}${liveNote}</div>
-      <div class="kpi-val ${k.color}">${fmt(k.val,key==='pmi'?1:1)}${k.unit}</div>
+      <div class="kpi-val ${k.color}">${fmt(k.val, key==='pmi'?1:1)}${k.unit}</div>
       <div class="kpi-delta-row">
-        <span class="kpi-delta ${deltaClass}">${delta>=0?'▲':'▼'} ${fmt(Math.abs(delta),key==='pmi'?1:2)}</span>
+        <span class="kpi-delta ${deltaClass}" title="${deltaLabel}">${delta>=0?'▲':'▼'} ${fmt(Math.abs(delta),key==='pmi'?1:2)}</span>
         <span class="kpi-norm-pill ${normClass}">${normPill}</span>
       </div>
       <div class="kpi-spark">${spark(seriesData, sparkColor, 36)}</div>
@@ -811,24 +991,27 @@ function renderMEO(region) {
 
   /* ── FX sectie ── */
   const fxPairs = [
-    { pair:'EUR/USD', valKey:'eurusd', prev:1.085, dec:4, histKey:'eurusd' },
-    { pair:'EUR/CNY', valKey:'eurcny', prev:7.820, dec:3, histKey:'eurcny' },
-    { pair:'USD/CNY', valKey:'usdcny', prev:7.250, dec:3, histKey:'usdcny' },
+    { pair:'EUR/USD', valKey:'eurusd', dec:4, histKey:'eurusd' },
+    { pair:'EUR/CNY', valKey:'eurcny', dec:3, histKey:'eurcny' },
+    { pair:'USD/CNY', valKey:'usdcny', dec:3, histKey:'usdcny' },
   ];
   let fxHtml = '';
   if(fx) {
     const fxDate = fx.date || new Date().toISOString().slice(0,10);
+    const deltaLabel = fxP ? 'dagverandering (vorige slotkoers)' : 'verandering vs referentiekoers';
     fxHtml = `<div class="fx-header">
       <div>
         <div class="fx-title">Wisselkoersen <span>(live)</span></div>
-        <div class="fx-meta">Frankfurter API · ${fxDate}</div>
+        <div class="fx-meta">Frankfurter API · ${fxDate} · ${deltaLabel}</div>
       </div>
       <span class="live-badge"><span class="live-dot"></span>live</span>
     </div>
     <div class="fx-grid">`;
     for(const p of fxPairs) {
-      const val = fx[p.valKey];
-      const chg = ((val-p.prev)/p.prev*100);
+      const val  = fx[p.valKey];
+      // Gebruik echte vorige dag als beschikbaar, anders vaste referentie
+      const prevVal = fxP?.[p.valKey] ?? { eurusd:1.085, eurcny:7.82, usdcny:7.25 }[p.valKey];
+      const chg  = ((val - prevVal) / prevVal * 100);
       const histVals = fxH ? fxH[p.histKey] : null;
       const spkColor = chg>=0?C.green:C.red;
       fxHtml += `<div class="fx-card">
@@ -836,7 +1019,7 @@ function renderMEO(region) {
         <div class="fx-rate">${val.toFixed(p.dec)}</div>
         <div class="fx-chg ${chg>=0?'delta-up':'delta-dn'}">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)}%</div>
         <div class="fx-spark">${histVals ? spark(histVals, spkColor, 36) : ''}</div>
-        <div class="fx-date">${histVals ? '90-daagse trend' : ''}</div>
+        <div class="fx-date">${histVals ? '90-daagse trend' : fxP ? `Vorig: ${prevVal.toFixed(p.dec)}` : ''}</div>
       </div>`;
     }
     fxHtml += '</div>';
