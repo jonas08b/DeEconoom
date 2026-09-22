@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=43200'); // Vercel cache: 12 uur
+  res.setHeader('Cache-Control', 's-maxage=43200');
 
   try {
     const today  = new Date();
@@ -11,22 +11,21 @@ export default async function handler(req, res) {
       + `?from=${fmt(today)}&to=${fmt(future)}&apikey=${process.env.FMP_KEY}`;
 
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!r.ok) throw new Error(`FMP ${r.status}`);
+    const text = await r.text();
 
-    const d = await r.json();
+    if (!r.ok) throw new Error(`FMP ${r.status}: ${text.slice(0, 300)}`);
 
-    // FMP geeft altijd een array; geef foutmelding als dat niet zo is
+    let d;
+    try { d = JSON.parse(text); }
+    catch { throw new Error(`Geen geldige JSON: ${text.slice(0, 300)}`); }
+
     if (!Array.isArray(d)) {
-      throw new Error(d?.['Error Message'] || d?.message || 'Onverwacht antwoord van FMP');
+      throw new Error(d?.['Error Message'] || d?.message || `Geen array: ${text.slice(0, 300)}`);
     }
-// Tijdelijk voor debugging — verwijder daarna
-const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-const body = await r.text(); // ← text() i.p.v. json()
-console.log('FMP status:', r.status, 'body:', body);
-if (!r.ok) throw new Error(`FMP ${r.status}: ${body}`);
-const d = JSON.parse(body);
+
     res.status(200).json(d);
   } catch (e) {
+    console.error('Kalender fout:', e.message);
     res.status(500).json({ error: e.message });
   }
 }
