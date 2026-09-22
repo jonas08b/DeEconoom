@@ -1196,11 +1196,11 @@ function closeSheet(e, force) {
 let kalFilter = 'all';
 let kalEvents  = [];
 
-// Relevante landen (focus: EU + VS impact)
+// Relevante landen (focus: EU + VS impact) — FMP gebruikt volledige landnamen
 const KAL_COUNTRIES = new Set(['United States','Euro Zone','Germany','France','Belgium','China','United Kingdom','Japan']);
 
-// Mapping AV category → onze filter + NL label
-function avCategory(ev) {
+// Mapping FMP category → onze filter + NL label
+function fmpCategory(ev) {
   const n = (ev.event||'').toLowerCase();
   if(/interest rate|central bank|ecb|fed|fomc|monetary/.test(n)) return 'rente';
   if(/cpi|inflation|pce|hicp|price/.test(n))                      return 'inflatie';
@@ -1211,7 +1211,8 @@ function avCategory(ev) {
   return 'overig';
 }
 
-function avImpact(ev) {
+// FMP impact: "High" / "Medium" / "Low"
+function fmpImpact(ev) {
   const imp = (ev.impact||'').toLowerCase();
   if(imp==='high')   return 'high';
   if(imp==='medium') return 'med';
@@ -1235,24 +1236,26 @@ async function fetchKalender() {
     if(cached && cached.date === today && cached.events?.length) return cached.events;
   } catch {}
 
-  const url = `/api/kalender`;
-  const r   = await fetch(url, {signal: AbortSignal.timeout(10000)});
-  const d   = await r.json();
+  const r = await fetch('/api/kalender', {signal: AbortSignal.timeout(10000)});
+  const d = await r.json();
 
-  // AV geeft { "name":"...", "description":"...", next array }  of direct een array
-  const raw = Array.isArray(d) ? d : (d.events || d.data || []);
+  // Serverside fout doorspelen
+  if(!r.ok || d?.error) throw new Error(d?.error || `HTTP ${r.status}`);
 
-  const events = raw
+  // FMP geeft altijd een array
+  if(!Array.isArray(d)) throw new Error('Onverwacht antwoord van kalender-API');
+
+  const events = d
     .filter(ev => KAL_COUNTRIES.has(ev.country))
     .map(ev => ({
       date:    (ev.date||'').slice(0,10),
       time:    (ev.date||'').slice(11,16) || null,
-      name:    ev.event || ev.name || '–',
+      name:    ev.event || '–',
       country: ev.country,
       flag:    COUNTRY_FLAG[ev.country] || '🌐',
       region:  `${COUNTRY_FLAG[ev.country]||'🌐'} ${COUNTRY_NL[ev.country]||ev.country}`,
-      cat:     avCategory(ev),
-      imp:     avImpact(ev),
+      cat:     fmpCategory(ev),
+      imp:     fmpImpact(ev),
       prev:    ev.previous != null ? String(ev.previous) : null,
       cons:    ev.estimate  != null ? String(ev.estimate)  : null,
       actual:  ev.actual    != null ? String(ev.actual)    : null,
