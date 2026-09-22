@@ -19,7 +19,12 @@ export default async function handler(req, res) {
     if (!Array.isArray(d)) {
       throw new Error(d?.['Error Message'] || d?.message || 'Onverwacht antwoord van FMP');
     }
-
+// Tijdelijk voor debugging — verwijder daarna
+const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+const body = await r.text(); // ← text() i.p.v. json()
+console.log('FMP status:', r.status, 'body:', body);
+if (!r.ok) throw new Error(`FMP ${r.status}: ${body}`);
+const d = JSON.parse(body);
     res.status(200).json(d);
   } catch (e) {
     res.status(500).json({ error: e.message });
