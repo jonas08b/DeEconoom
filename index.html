@@ -280,6 +280,76 @@ textarea.chat-input:focus{border-color:#555}
 .saved-chat-name{font-size:13px;flex:1}
 .saved-chat-date{font-size:11px;color:var(--ink-muted)}
 
+/* ── LEERTOOL ── */
+.lt-hero{padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.lt-hero-title{font-family:var(--font-serif);font-size:24px;margin-bottom:6px;letter-spacing:-.3px}
+.lt-hero-sub{font-size:13px;color:var(--ink-muted);line-height:1.6}
+.lt-search-row{display:flex;gap:8px;margin-bottom:14px}
+.lt-search-input{flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--ink);font-family:var(--font-sans);font-size:14px;border-radius:10px;padding:11px 14px;outline:none;transition:border-color .15s}
+.lt-search-input::placeholder{color:var(--ink-faint)}
+.lt-search-input:focus{border-color:#555}
+.lt-search-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;transition:opacity .15s;white-space:nowrap;flex-shrink:0}
+.lt-search-btn:hover{opacity:.85}
+.lt-search-btn:disabled{opacity:.4;cursor:not-allowed}
+.lt-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.lt-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:500;color:var(--ink-muted);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.lt-chip:hover{border-color:#555;color:var(--ink)}
+.lt-chip-icon{margin-right:4px}
+.lt-settings-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px}
+.lt-settings-label{font-size:11px;color:var(--ink-muted);white-space:nowrap;flex-shrink:0}
+.lt-key-input{flex:1;background:transparent;border:none;color:var(--ink);font-family:var(--font-sans);font-size:12px;outline:none;min-width:0}
+.lt-key-input::placeholder{color:var(--ink-faint)}
+.lt-key-save{font-size:11px;font-weight:600;color:var(--accent);background:none;border:none;padding:0;flex-shrink:0}
+/* Progress */
+.lt-progress{display:flex;align-items:center;gap:4px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.lt-progress::-webkit-scrollbar{display:none}
+.lt-prog-dot{width:26px;height:26px;border-radius:8px;background:var(--bg-card);border:1.5px solid var(--border);font-size:10px;font-weight:700;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s}
+.lt-prog-dot.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.lt-prog-dot.done{background:var(--bg-card2);border-color:#444;color:#666}
+/* Card */
+.lt-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.lt-card-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg-card2)}
+.lt-card-num{width:24px;height:24px;border-radius:7px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lt-card-label{font-size:12px;font-weight:700;color:var(--ink);letter-spacing:.02em}
+.lt-card-body{padding:14px}
+.lt-card-body p{font-size:13px;color:var(--ink-muted);line-height:1.7;margin-bottom:8px}
+.lt-card-body p:last-child{margin-bottom:0}
+.lt-card-body strong{color:var(--ink)}
+.lt-card-body h4{font-size:12px;font-weight:700;color:var(--ink);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+/* Begrippen */
+.lt-term-list{display:flex;flex-direction:column;gap:8px}
+.lt-term{background:var(--bg-card2);border-radius:8px;padding:10px 12px}
+.lt-term-name{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.lt-term-def{font-size:12px;color:var(--ink-muted);line-height:1.55;margin-bottom:4px}
+.lt-term-ex{font-size:11px;color:var(--accent);padding:4px 8px;background:var(--accent-dim);border-radius:5px;display:inline-block}
+/* Visueel */
+.lt-visual-box{background:var(--bg-card2);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.lt-visual-row{display:flex;gap:8px;align-items:flex-start}
+.lt-visual-key{font-size:10px;font-weight:700;color:var(--ink-muted);min-width:70px;padding-top:1px;flex-shrink:0}
+.lt-visual-val{font-size:12px;color:var(--ink);line-height:1.5}
+/* Aannames */
+.lt-assumption-list{display:flex;flex-direction:column;gap:6px}
+.lt-assumption{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-muted);line-height:1.55}
+.lt-assumption::before{content:'⚙️';font-size:11px;flex-shrink:0;margin-top:1px}
+/* Vragen */
+.lt-vragen{display:flex;flex-direction:column;gap:8px}
+.lt-vraag{background:var(--bg-card2);border-radius:8px;padding:10px 12px}
+.lt-vraag-num{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.lt-vraag-txt{font-size:12px;color:var(--ink);line-height:1.5}
+.lt-vraag-type{font-size:10px;color:var(--ink-muted);margin-top:3px}
+/* Nav */
+.lt-nav{display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px}
+.lt-nav-btn{background:var(--bg-card);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;transition:all .15s}
+.lt-nav-btn:hover{border-color:#555}
+.lt-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.lt-nav-step{font-size:12px;color:var(--ink-muted)}
+/* Source tag */
+.lt-source{font-size:10px;color:var(--ink-faint);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+/* Skeleton */
+.lt-skeleton{animation:skel 1.2s ease-in-out infinite alternate}
+@keyframes skel{from{opacity:.4}to{opacity:.8}}
+.lt-skel-line{height:12px;background:var(--bg-card2);border-radius:4px;margin-bottom:8px}
+
 /* ── LOADING ── */
 .load-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:12px;color:var(--ink-muted);font-size:13px}
 .spin-lg{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
@@ -380,21 +450,48 @@ textarea.chat-input:focus{border-color:#555}
   </div>
 </section>
 
-<!-- ══ CHAT ══ -->
+<!-- ══ LEERTOOL ══ -->
 <section class="view" id="view-chat">
-  <div class="chat-hero">
-    <div class="chat-hero-title">Economie <span style="color:var(--accent)">leertool</span></div>
-    <div class="chat-hero-sub">Stel een begrip, model of theorie en krijg een gestructureerde uitleg. Gesprekken worden lokaal opgeslagen.</div>
+  <div class="lt-hero">
+    <div class="lt-hero-title">Economie <span style="color:var(--accent)">Leertool</span></div>
+    <div class="lt-hero-sub">Voer een begrip, model of theorie in — krijg 10 gestructureerde studiekaarten.</div>
   </div>
-  <div class="sec-hd" style="padding-top:0;padding-bottom:8px"><div class="sec-hd-title" style="font-size:16px">Concepten</div></div>
-  <div class="concept-grid" id="conceptGrid"></div>
-  <div class="sec-hd" style="padding-top:4px;padding-bottom:8px"><div class="sec-hd-title" style="font-size:16px">Gesprek</div></div>
-  <div class="chat-msgs" id="chatMsgs"></div>
-  <div class="chat-form">
-    <textarea class="chat-input" id="chatInput" placeholder="Leg mij de Phillips-curve uit…" rows="1" onkeydown="chatKeyDown(event)" oninput="autoResize(this)"></textarea>
-    <button class="chat-send" id="chatSend" onclick="sendChat()">↑</button>
+
+  <!-- Zoekbalk -->
+  <div class="lt-search-row">
+    <input class="lt-search-input" id="ltInput" type="text" placeholder="bijv. Phillips-curve, IS-LM model, Okun's wet…" onkeydown="if(event.key==='Enter')ltAnalyse()">
+    <button class="lt-search-btn" id="ltBtn" onclick="ltAnalyse()">Analyseer →</button>
   </div>
-  <div class="chat-saves" id="chatSaves"></div>
+
+  <!-- Snelle concepten -->
+  <div class="lt-chips" id="ltChips"></div>
+
+  <!-- Resultaat -->
+  <div id="ltResult" style="display:none">
+    <!-- Progress dots -->
+    <div class="lt-progress" id="ltProgress"></div>
+    <!-- Actieve kaart -->
+    <div id="ltCard"></div>
+    <!-- Navigatie -->
+    <div class="lt-nav">
+      <button class="lt-nav-btn" id="ltPrev" onclick="ltNav(-1)" disabled>← Vorige</button>
+      <span class="lt-nav-step" id="ltStepLabel">Stap 1 / 10</span>
+      <button class="lt-nav-btn" id="ltNext" onclick="ltNav(1)">Volgende →</button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="ltLoading" style="display:none">
+    <div class="lt-card">
+      <div class="lt-card-hd"><div class="lt-card-num lt-skeleton" style="width:24px;height:24px"></div><div class="lt-skel-line" style="width:120px;margin:0"></div></div>
+      <div class="lt-card-body">
+        <div class="lt-skel-line lt-skeleton" style="width:100%"></div>
+        <div class="lt-skel-line lt-skeleton" style="width:85%"></div>
+        <div class="lt-skel-line lt-skeleton" style="width:70%"></div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--ink-muted);text-align:center;margin-top:8px" id="ltLoadMsg">Groq analyseert…</p>
+  </div>
 </section>
 
 </main>
@@ -675,7 +772,6 @@ function switchTab(id, btn) {
   btn.classList.add('active');
   if(id==='meo' && !meoLoaded) loadMEO();
   if(id==='kalender') renderKalender();
-  if(id==='chat') renderSavedChats();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1273,84 +1369,182 @@ STRUCTUUR (exact dit HTML-formaat):
 }
 
 /* ═══════════════════════════════════════════════════
-   CHATBOT / LEERTOOL
+   LEERTOOL — GROQ AI (JSON-mode, 10 studiekaarten)
 ═══════════════════════════════════════════════════ */
-const CONCEPTS = [
+const LT_CONCEPTS = [
   {icon:'📉',name:'Phillips-curve'},{icon:'🏦',name:'Taylor-regel'},
   {icon:'💹',name:'IS-LM model'},{icon:'📊',name:'Kwantitatieve versoepeling'},
   {icon:'⚖️',name:'Fiscaal multiplier'},{icon:'🔄',name:'Conjunctuurcyclus'},
-  {icon:'💱',name:'Koopkrachtpariteit'},{icon:'📈',name:'Okun\'s wet'},
+  {icon:'💱',name:'Koopkrachtpariteit'},{icon:'📈',name:"Okun's wet"},
+  {icon:'🎯',name:'Mundell-Fleming'},{icon:'🏗️',name:'Solow-groeimodel'},
 ];
-let chatHistory=[], savedChats=[];
-try{savedChats=JSON.parse(localStorage.getItem('deeconomist_chats')||'[]');}catch{}
 
-$('conceptGrid').innerHTML = CONCEPTS.map(c=>`<button class="concept-chip" onclick="askConcept('${c.name}')"><span class="concept-chip-icon">${c.icon}</span>${c.name}</button>`).join('');
+const LT_STEPS = [
+  {num:1, icon:'📖', label:'Uitleg & bron'},
+  {num:2, icon:'💬', label:'Gewone taal'},
+  {num:3, icon:'🔑', label:'Kernbegrippen'},
+  {num:4, icon:'📊', label:'Visueel model'},
+  {num:5, icon:'⚙️', label:'Aannames'},
+  {num:6, icon:'📌', label:'Model stelt…'},
+  {num:7, icon:'⚠️', label:'Beperkingen'},
+  {num:8, icon:'🌍', label:'Echte situatie'},
+  {num:9, icon:'🔮', label:'Toepassing'},
+  {num:10,icon:'✏️', label:'Oefenvragen'},
+];
 
-function askConcept(name){$('chatInput').value=`Leg mij ${name} uit`;sendChat();}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-function chatKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+let ltData = null;
+let ltStep = 0;
 
-function renderSavedChats(){
-  if(!savedChats.length){$('chatSaves').innerHTML='';return;}
-  $('chatSaves').innerHTML=`<div class="chat-saves-hd">Opgeslagen gesprekken</div>`+savedChats.map((s,i)=>`<div class="saved-chat-item" onclick="loadChat(${i})"><div class="saved-chat-icon">💬</div><div class="saved-chat-name">${s.title}</div><div class="saved-chat-date">${s.date}</div></div>`).join('');
-}
-function loadChat(i){chatHistory=savedChats[i].messages;renderChatMsgs();}
-function renderChatMsgs(){
-  const box=$('chatMsgs');
-  box.innerHTML=chatHistory.map(m=>`<div class="msg ${m.role==='user'?'user':'ai'}">${m.content}</div>`).join('');
-  box.scrollTop=box.scrollHeight;
-}
+// Init chips
+$('ltChips').innerHTML = LT_CONCEPTS.map(c=>
+  `<button class="lt-chip" onclick="ltSetConcept('${c.name}')"><span class="lt-chip-icon">${c.icon}</span>${c.name}</button>`
+).join('');
 
-async function sendChat(){
-  const inp=$('chatInput');
-  const txt=inp.value.trim();
-  if(!txt) return;
-  inp.value=''; inp.style.height='auto';
-  $('chatSend').disabled=true;
-  chatHistory.push({role:'user',content:txt});
-  renderChatMsgs();
-  const typingEl=document.createElement('div');
-  typingEl.className='msg-typing';
-  typingEl.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-  $('chatMsgs').appendChild(typingEl);
-  $('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;
+function ltSetConcept(name){ $('ltInput').value=name; ltAnalyse(); }
+
+const LT_SYSTEM = `Je bent een educatieve economie-tutor. De gebruiker geeft een economisch begrip, model of theorie.
+Geef antwoord als PURE JSON — geen markdown-fences, geen uitleg, alleen het JSON-object.
+Houd elke tekst BEKNOPT: max 3–5 zinnen per veld.
+Formaat:
+{
+  "begrip": "naam van het concept",
+  "stap1_uitleg": "Beschrijf in 3-4 zinnen wat dit model/begrip verklaart. Toegankelijk, weinig wiskunde.",
+  "stap1_bron": "Naam van een echte toegankelijke bron (boek, video of artikel, bijv. 'Mankiw – Principles of Economics, h.33' of 'Khan Academy – Phillips Curve')",
+  "stap2": "In gewone taal betekent dit: … (2-3 zinnen, nul jargon, alsof je het aan een 16-jarige uitlegt)",
+  "stap3": [
+    {"term": "termNaam", "def": "één definitiezin", "voorbeeld": "kort concreet voorbeeld (max 1 zin)"}
+  ],
+  "stap4": {
+    "x_as": "label + wat het meet",
+    "y_as": "label + wat het meet",
+    "elementen": [
+      {"naam": "naam van lijn/punt/zone", "betekenis": "wat het voorstelt"}
+    ],
+    "beweging": "Hoe verschuift de curve? Wanneer? (1-2 zinnen)"
+  },
+  "stap5": ["aanname 1 (1 zin)", "aanname 2", "aanname 3", "aanname 4"],
+  "stap6": "Dit model gaat ervan uit dat… (2-3 aannames als lopende tekst, beginnen met 'Dit model gaat ervan uit dat')",
+  "stap7": "Wanneer loopt dit in de echte wereld mis? Geef 2-3 concrete gevallen, kort.",
+  "stap8_context": "Beschrijf één concrete echte situatie waar dit model relevant is (1-2 zinnen, vernoem land/jaar).",
+  "stap9": "Volgens dit model zou hier het volgende gebeuren: … (2-3 zinnen, logisch redeneren vanuit het model)",
+  "stap10": [
+    {"vraag": "oefenvraag 1", "type": "begrip"},
+    {"vraag": "oefenvraag 2", "type": "toepassing"},
+    {"vraag": "oefenvraag 3", "type": "kritiek"}
+  ]
+}`;
+
+async function ltAnalyse(){
+  const begrip = $('ltInput').value.trim();
+  if(!begrip) return;
+  $('ltBtn').disabled = true;
+  $('ltResult').style.display = 'none';
+  $('ltLoading').style.display = 'block';
+
+  const msgs = ['Groq analyseert…','Concepten opbouwen…','Aannames identificeren…','Bijna klaar…'];
+  let mi=0;
+  const tick = setInterval(()=>{ $('ltLoadMsg').textContent=msgs[Math.min(++mi,msgs.length-1)]; },1800);
+
   try {
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp = await fetch('/api/groq',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6', max_tokens:1000,
-        system:`Je bent DeEconoom, een educatieve macro-economie tutor. Je geeft gestructureerde, feitelijke uitleg over economische concepten.
-KERNREGELS:
-- Schrijf UITSLUITEND in het Nederlands
-- Geen AI SLOP. Nooit "Zeker!", "Geweldig dat je dit vraagt" — nooit. Begin DIRECT.
-- Gebruik CONCRETE CIJFERS en historische voorbeelden
-- Gebruik HTML voor structuur: <h4>, <p>, <strong>
-- Max 4–5 paragrafen
-Structuur: <h4>Definitie</h4><p>...</p><h4>Hoe het werkt</h4><p>...</p><h4>Historisch voorbeeld</h4><p>...</p><h4>Relevantie vandaag</h4><p>...</p>`,
-        messages:chatHistory.map(m=>({role:m.role,content:m.content}))
+        model:'llama-3.3-70b-versatile',
+        response_format:{type:'json_object'},
+        max_tokens:2000,
+        messages:[
+          {role:'system', content:LT_SYSTEM},
+          {role:'user', content:`Analyseer dit economische concept volledig: "${begrip}"`}
+        ]
       })
     });
-    const data=await resp.json();
-    const reply=data?.content?.[0]?.text||'Geen antwoord.';
-    typingEl.remove();
-    chatHistory.push({role:'assistant',content:reply});
-    renderChatMsgs();
-    if(chatHistory.length>=2){
-      const title=chatHistory[0].content.slice(0,40)+(chatHistory[0].content.length>40?'…':'');
-      const existing=savedChats.findIndex(s=>s.title===title);
-      const entry={title,date:new Date().toLocaleDateString('nl-BE'),messages:chatHistory};
-      if(existing>=0)savedChats[existing]=entry;else savedChats.unshift(entry);
-      savedChats=savedChats.slice(0,10);
-      try{localStorage.setItem('deeconomist_chats',JSON.stringify(savedChats));}catch{}
-      renderSavedChats();
-    }
+    const raw = await resp.json();
+    if(raw.error) throw new Error(raw.error.message);
+    ltData = JSON.parse(raw.choices[0].message.content);
+    ltStep = 0;
+    ltRender();
+    $('ltResult').style.display = 'block';
   } catch(e) {
-    typingEl.remove();
-    chatHistory.push({role:'assistant',content:`<p>Fout: ${e.message}</p>`});
-    renderChatMsgs();
+    alert('Fout: '+e.message);
+  } finally {
+    clearInterval(tick);
+    $('ltLoading').style.display = 'none';
+    $('ltBtn').disabled = false;
   }
-  $('chatSend').disabled=false;
+}
+
+function ltNav(dir){
+  ltStep = Math.max(0, Math.min(9, ltStep+dir));
+  ltRender();
+}
+
+function ltGoStep(i){ ltStep=i; ltRender(); }
+
+function ltRender(){
+  if(!ltData) return;
+  // Progress dots
+  $('ltProgress').innerHTML = LT_STEPS.map((s,i)=>
+    `<div class="lt-prog-dot ${i===ltStep?'active':i<ltStep?'done':''}" onclick="ltGoStep(${i})" title="${s.label}">${s.num}</div>`
+  ).join('');
+  // Step label
+  $('ltStepLabel').textContent = `Stap ${ltStep+1} / 10 — ${LT_STEPS[ltStep].label}`;
+  // Nav
+  $('ltPrev').disabled = ltStep===0;
+  $('ltNext').disabled = ltStep===9;
+  // Card content
+  const s=LT_STEPS[ltStep];
+  let body='';
+  try{ body = ltCardBody(ltStep); } catch(e){ body=`<p>Fout bij weergave: ${e.message}</p>`; }
+  $('ltCard').innerHTML = `
+    <div class="lt-card">
+      <div class="lt-card-hd">
+        <div class="lt-card-num">${s.num}</div>
+        <div class="lt-card-label">${s.icon} ${s.label}</div>
+      </div>
+      <div class="lt-card-body">${body}</div>
+    </div>`;
+  $('ltCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function ltCardBody(step){
+  const d=ltData;
+  switch(step){
+    case 0: return `
+      <p>${d.stap1_uitleg}</p>
+      <div class="lt-source">📚 Aanbevolen bron: <strong>${d.stap1_bron}</strong></div>`;
+    case 1: return `<p>${d.stap2}</p>`;
+    case 2: return `<div class="lt-term-list">${(d.stap3||[]).map(t=>`
+      <div class="lt-term">
+        <div class="lt-term-name">${t.term}</div>
+        <div class="lt-term-def">${t.def}</div>
+        <span class="lt-term-ex">💡 ${t.voorbeeld}</span>
+      </div>`).join('')}</div>`;
+    case 3:
+      const el4=d.stap4||{};
+      const elemHtml=(el4.elementen||[]).map(e=>`
+        <div class="lt-visual-row">
+          <span class="lt-visual-key">${e.naam}</span>
+          <span class="lt-visual-val">${e.betekenis}</span>
+        </div>`).join('');
+      return `<div class="lt-visual-box">
+        <div class="lt-visual-row"><span class="lt-visual-key">X-as</span><span class="lt-visual-val">${el4.x_as||'—'}</span></div>
+        <div class="lt-visual-row"><span class="lt-visual-key">Y-as</span><span class="lt-visual-val">${el4.y_as||'—'}</span></div>
+        ${elemHtml}
+        ${el4.beweging?`<div class="lt-visual-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:8px"><span class="lt-visual-key">Verschuiving</span><span class="lt-visual-val">${el4.beweging}</span></div>`:''}
+      </div>`;
+    case 4: return `<div class="lt-assumption-list">${(d.stap5||[]).map(a=>`<div class="lt-assumption">${a}</div>`).join('')}</div>`;
+    case 5: return `<p>${d.stap6}</p>`;
+    case 6: return `<p>${d.stap7}</p>`;
+    case 7: return `<p><strong>Situatie:</strong> ${d.stap8_context}</p>`;
+    case 8: return `<p>${d.stap9}</p>`;
+    case 9: return `<div class="lt-vragen">${(d.stap10||[]).map((v,i)=>`
+      <div class="lt-vraag">
+        <div class="lt-vraag-num">Vraag ${i+1} · ${v.type}</div>
+        <div class="lt-vraag-txt">${v.vraag}</div>
+      </div>`).join('')}</div>`;
+    default: return '';
+  }
 }
 </script>
 </body>
