@@ -660,110 +660,7 @@ function parseECBSeries(d) {
   return pairs;
 }
 
-async function fetchECBRate() {
-  try {
-    const r = await fetch('https://data-api.ecb.europa.eu/service/data/FM/B.U2.EUR.RT0.DZ.N.R.S.B.N.A?format=jsondata&lastNObservations=12', {signal:AbortSignal.timeout(6000)});
-    const d = await r.json();
-    const pairs = parseECBSeries(d);
-    if(pairs.length) return { current: pairs[pairs.length-1].val, hist: pairs.map(p=>p.val), period: pairs[pairs.length-1].period };
-  } catch {}
-  return null;
-}
-
-async function fetchECBInflation() {
-  // EU HICP (Eurozone)
-  try {
-    const r = await fetch('https://data-api.ecb.europa.eu/service/data/ICP/M.U2.N.000000.4.ANR?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
-    const d = await r.json();
-    const pairs = parseECBSeries(d);
-    if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
-  } catch {}
-  return null;
-}
-
-async function fetchECBInflationBE() {
-  // België HICP via ECB (ISO: BE)
-  try {
-    const r = await fetch('https://data-api.ecb.europa.eu/service/data/ICP/M.BE.N.000000.4.ANR?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
-    const d = await r.json();
-    const pairs = parseECBSeries(d);
-    if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
-  } catch {}
-  return null;
-}
-
-async function fetchECBUnemploymentEU() {
-  // Eurozone werkloosheidsgraad (maandelijks, seizoensgecorrigeerd)
-  try {
-    const r = await fetch('https://data-api.ecb.europa.eu/service/data/LFSI/M.I8.S.UNEHRT.TOTAL0.15_74.T?format=jsondata&lastNObservations=18', {signal:AbortSignal.timeout(6000)});
-    const d = await r.json();
-    const pairs = parseECBSeries(d);
-    if(pairs.length) return { current: pairs[pairs.length-1].val, period: pairs[pairs.length-1].period, hist: pairs.map(p=>p.val) };
-  } catch {}
-  return null;
-}
-
-/* ═══════════════════════════════════════════════════
-   FRED API — VS indicatoren (gratis, CORS-correct)
-   Geen API-key nodig voor publieke reeksen
-═══════════════════════════════════════════════════ */
-const FRED_BASE = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
-const fredCache = {};
-
-async function fetchFRED(seriesId, obs=24) {
-  if(fredCache[seriesId] && Date.now()-fredCache[seriesId].ts < 3600000) return fredCache[seriesId].data;
-  try {
-    const url = `${FRED_BASE}?id=${seriesId}`;
-    const r = await fetch(url, {signal:AbortSignal.timeout(8000)});
-    const text = await r.text();
-    const lines = text.trim().split('\n').slice(1); // skip header
-    const valid = lines
-      .map(l => { const [date, val] = l.split(','); return { date: date.trim(), val: parseFloat(val) }; })
-      .filter(x => !isNaN(x.val));
-    const recent = valid.slice(-obs);
-    if(!recent.length) return null;
-    const data = {
-      current: recent[recent.length-1].val,
-      prev: recent[recent.length-2]?.val ?? null,
-      period: recent[recent.length-1].date,
-      hist: recent.map(x=>x.val)
-    };
-    fredCache[seriesId] = { data, ts: Date.now() };
-    return data;
-  } catch {}
-  return null;
-}
-
-// FRED series-IDs voor VS:
-// CPIAUCSL = CPI YoY (level) → we berekenen YoY zelf
-// UNRATE   = werkloosheidsgraad
-// A191RL1Q225SBEA = reëel BBP kwartaalgroei
-// MANEMP / ISM PMI niet op FRED als index → we houden PMI hardcoded (ISM heeft geen open API)
-
-async function fetchUSData() {
-  const [cpiRaw, unemployment, gdp] = await Promise.allSettled([
-    fetchFRED('CPIAUCSL', 26),   // 26 obs = 2 jaar voor YoY berekening
-    fetchFRED('UNRATE', 18),
-    fetchFRED('A191RL1Q225SBEA', 12) // kwartaal BBP groei
-  ]).then(r => r.map(x => x.status==='fulfilled' ? x.value : null));
-
-  let inflation = null;
-  if(cpiRaw && cpiRaw.hist.length >= 14) {
-    const h = cpiRaw.hist;
-    const cur = h[h.length-1];
-    const yr  = h[h.length-13]; // 12 maanden geleden
-    const prv = h[h.length-2];
-    const yrPrev = h[h.length-14];
-    const yoy     = ((cur-yr)/yr*100);
-    const yoyPrev = ((prv-yrPrev)/yrPrev*100);
-    // Bouw YoY history: voor elke maand waarvoor 12m eerder beschikbaar
-    const yoyHist = [];
-    for(let i=12; i<h.length; i++) yoyHist.push(+((h[i]-h[i-12])/h[i-12]*100).toFixed(2));
-    inflation = { current: +yoy.toFixed(2), prev: +yoyPrev.toFixed(2), period: cpiRaw.period, hist: yoyHist };
-  }
-
-  return { inflation, unemployment, gdp };
-}
+/* ECB parseECBSeries blijft behouden voor eventueel toekomstig gebruik */
 
 /* ═══════════════════════════════════════════════════
    TAB NAVIGATION
@@ -839,26 +736,40 @@ renderHome();
 /* ═══════════════════════════════════════════════════
    MEO — LOAD + RENDER
 ═══════════════════════════════════════════════════ */
-let liveECBRate=null, liveECBInflation=null, liveECBInflationBE=null, liveECBUnemploymentEU=null;
+let liveMEO=null;          // /api/meo response cache
 let liveFX=null, liveFXPrev=null, liveFXHist=null;
-let liveUSData=null;
+
+// Backwards-compat aliassen voor UITLEG-sheet (gebruikt nog MD[r].x.val)
+// → worden in renderMEO overschreven na API-call
+
+const meoCache = {};
+
+async function fetchMEOData() {
+  if(meoCache.data && Date.now()-meoCache.ts < 14400000) return meoCache.data;
+  const r = await fetch('/api/meo', {signal:AbortSignal.timeout(20000)});
+  if(!r.ok) throw new Error(`MEO API ${r.status}`);
+  const d = await r.json();
+  meoCache.data = d;
+  meoCache.ts   = Date.now();
+  return d;
+}
 
 async function loadMEO() {
   meoLoaded = true;
   $('meo-content').innerHTML = '<div class="load-screen"><div class="spin-lg"></div>Live data ophalen…</div>';
-  const results = await Promise.allSettled([
-    fetchECBRate(),
-    fetchECBInflation(),
-    fetchECBInflationBE(),
-    fetchECBUnemploymentEU(),
+
+  const [meoResult, fxResult, fxPrevResult, fxHistResult] = await Promise.allSettled([
+    fetchMEOData(),
     fetchFX(),
     fetchFXPrev(),
     fetchFXHistory(90),
-    fetchUSData()
-  ]).then(r => r.map(x => x.status==='fulfilled' ? x.value : null));
+  ]);
 
-  [liveECBRate, liveECBInflation, liveECBInflationBE, liveECBUnemploymentEU,
-   liveFX, liveFXPrev, liveFXHist, liveUSData] = results;
+  liveMEO    = meoResult.status==='fulfilled'    ? meoResult.value    : null;
+  liveFX     = fxResult.status==='fulfilled'     ? fxResult.value     : null;
+  liveFXPrev = fxPrevResult.status==='fulfilled' ? fxPrevResult.value : null;
+  liveFXHist = fxHistResult.status==='fulfilled' ? fxHistResult.value : null;
+
   renderMEO(currentRegion);
 }
 
@@ -887,61 +798,38 @@ function renderMEO(region) {
   // Werkkopie van MD zodat we live waarden kunnen injecteren zonder MD te muteren
   const live = JSON.parse(JSON.stringify(d));
 
-  if(region === 'eu') {
-    if(liveECBInflation?.current) {
-      live.inflatie.val    = +liveECBInflation.current.toFixed(1);
-      live.inflatie.date   = liveECBInflation.period || live.inflatie.date;
-      live.inflatie._live  = true;
-      live.inflatie._hist  = liveECBInflation.hist;
-    }
-    if(liveECBUnemploymentEU?.current) {
-      live.werkloosheid.val   = +liveECBUnemploymentEU.current.toFixed(1);
-      live.werkloosheid.date  = liveECBUnemploymentEU.period || live.werkloosheid.date;
-      live.werkloosheid._live = true;
-      live.werkloosheid._hist = liveECBUnemploymentEU.hist;
-    }
-    if(liveECBRate?.current) {
-      RATES.ecb.hist = liveECBRate.hist || RATES.ecb.hist;
-      RATES.ecb.val  = +liveECBRate.current.toFixed(2);
-    }
+  function injectLive(field, apiData, dateKey='period') {
+    if(!apiData || apiData.current == null) return;
+    live[field].val   = +apiData.current.toFixed(1);
+    if(apiData.prev != null) live[field].prev = +apiData.prev.toFixed(1);
+    live[field].date  = apiData.period || apiData[dateKey] || live[field].date;
+    if(apiData.src)  live[field].src  = apiData.src;
+    live[field]._live = true;
+    if(apiData.hist?.length) live[field]._hist = apiData.hist;
   }
 
-  if(region === 'be') {
-    if(liveECBInflationBE?.current) {
-      live.inflatie.val   = +liveECBInflationBE.current.toFixed(1);
-      live.inflatie.date  = liveECBInflationBE.period || live.inflatie.date;
-      live.inflatie.src   = 'ECB/Eurostat (HICP BE)';
-      live.inflatie._live = true;
-      live.inflatie._hist = liveECBInflationBE.hist;
-    }
+  const api = liveMEO?.[region] ?? {};
+
+  injectLive('inflatie',     api.inflation);
+  injectLive('werkloosheid', api.unemployment);
+  injectLive('bbp',          api.gdp);
+
+  // VS: ook live PMI van ISM via FRED
+  if(region === 'us' && api.pmi?.current != null) {
+    injectLive('pmi', api.pmi);
   }
 
-  if(region === 'us' && liveUSData) {
-    if(liveUSData.inflation?.current != null) {
-      live.inflatie.val   = +liveUSData.inflation.current.toFixed(1);
-      live.inflatie.prev  = +liveUSData.inflation.prev.toFixed(1);
-      live.inflatie.date  = liveUSData.inflation.period || live.inflatie.date;
-      live.inflatie.src   = 'BLS via FRED';
-      live.inflatie._live = true;
-      live.inflatie._hist = liveUSData.inflation.hist;
-    }
-    if(liveUSData.unemployment?.current != null) {
-      live.werkloosheid.val   = +liveUSData.unemployment.current.toFixed(1);
-      live.werkloosheid.prev  = liveUSData.unemployment.prev != null ? +liveUSData.unemployment.prev.toFixed(1) : live.werkloosheid.prev;
-      live.werkloosheid.date  = liveUSData.unemployment.period || live.werkloosheid.date;
-      live.werkloosheid.src   = 'BLS via FRED';
-      live.werkloosheid._live = true;
-      live.werkloosheid._hist = liveUSData.unemployment.hist;
-    }
-    if(liveUSData.gdp?.current != null) {
-      live.bbp.val   = +liveUSData.gdp.current.toFixed(1);
-      live.bbp.prev  = liveUSData.gdp.prev != null ? +liveUSData.gdp.prev.toFixed(1) : live.bbp.prev;
-      live.bbp.date  = liveUSData.gdp.period || live.bbp.date;
-      live.bbp.src   = 'BEA via FRED';
-      live.bbp._live = true;
-      live.bbp._hist = liveUSData.gdp.hist;
-    }
+  // ECB-rente updaten
+  if(liveMEO?.rates?.ecb) {
+    RATES.ecb.val  = +liveMEO.rates.ecb.current.toFixed(2);
+    if(liveMEO.rates.ecb.hist?.length) RATES.ecb.hist = liveMEO.rates.ecb.hist;
   }
+
+  // UITLEG-sheet gebruikt MD[r].x.val → synchroniseer met live waarden
+  MD[region].inflatie.val     = live.inflatie.val;
+  MD[region].werkloosheid.val = live.werkloosheid.val;
+  MD[region].bbp.val          = live.bbp.val;
+  MD[region].pmi.val          = live.pmi.val;
 
   /* ── FX data ── */
   const fx  = liveFX  || null;
